@@ -72,10 +72,21 @@
         }
         #bgImage{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1;}
         #speechText{
-          position:absolute;bottom:150px;left:5%;width:90%;
-          padding:12px 16px;background:rgba(255,255,255,.8);
-          font-size:16px;border-radius:12px;line-height:1.5;z-index:3;text-align:left;
+        position:absolute;
+        bottom:150px;
+        left:50%;
+        transform:translateX(-50%);
+        width:90%;
+        max-width:320px;
+        padding:12px 16px;
+        background:rgba(255,255,255,.8);
+        font-size:16px;
+        border-radius:12px;
+        line-height:1.5;
+        z-index:3;
+        text-align:left;
         }
+
         #choicesContainer{
           position:absolute;bottom:15px;left:50%;transform:translateX(-50%);
           width:90%;display:flex;flex-direction:column;align-items:center;z-index:4;
@@ -178,26 +189,26 @@ const scenes={
       },
       //結果（生活輔導員發現你在團體活動時間躲在房間內、是否參加安置機構團康活動）：團康甩手功.png   38~40
       g1: {
-        bg: '38new.png',
+        bg: '38ne.png',
         speech: '有些安置機構會安排每天固定的團體活動，若無正當理由一定要參與。新北市街友中途之家社會重建中心丁昆祥主任分享，團體活動包含三餐、甩手功、園藝、DIY、手工，另外還有就業訓練和物理治療。',
         autoNext: 'g2',
         choices: [] 
       },
       g2: {
-        bg: '38new.png',
+        bg: '38ne.png',
         speech: '65歲的街友小王（化名）回憶自己之前住在安置機構時的生活，語帶壓抑地說：「24小時都被圈在裡面，什麼時間該做什麼，通通被規定好，像軍隊一樣。」小王回憶道，語氣中透著壓抑。',
         autoNext: 'ddd',
         choices: [] 
       },
       //結果（生活輔導員發現你在團體活動時間躲在房間內、是否參加安置機構團康活動）：團康甩手功.png   38~40
       h1: {
-        bg: '38new.png',
+        bg: '38ne.png',
         speech: '有些安置機構會安排每天固定的團體活動，若無正當理由一定要參與。新北市街友中途之家社會重建中心丁昆祥主任分享，團體活動包含三餐、甩手功、園藝、DIY、手工，另外還有就業訓練和物理治療。',
         autoNext: 'h2',
         choices: [] 
       },
       h2: {
-        bg: '38new.png',
+        bg: '38ne.png',
         speech: '65歲的街友小王（化名）回憶自己之前住在安置機構時的生活，語帶壓抑地說：「24小時都被圈在裡面，什麼時間該做什麼，通通被規定好，像軍隊一樣。」小王回憶道，語氣中透著壓抑。',
         autoNext: 'ccc',
         choices: [] 
@@ -250,26 +261,26 @@ const scenes={
       },
       //結果（生活輔導員強硬要求你參與活動）：團康甩手功.png   41\42
       g3: {
-        bg: '38new.png',
+        bg: '38ne.png',
         speech: '台北車站大廳內，坐在紙箱上滑短影音的阿進分享，他聽老一輩街友說安置機構環境好，但入住後，他卻幻想破滅。',
         autoNext: 'g4',
         choices: [] 
       },
       g4: {
-        bg: '38new.png',
+        bg: '38ne.png',
         speech: '他解釋：「剛進去的街友會被那些老街友管，而且他的口氣不是很好，我有被關過，比在監獄還要難過。」阿進說：「社工他們的口氣真的非常非常不好，而且被管得死死的，他們永遠都是沒有錯的。」',
         autoNext: 'b2',
         choices: [] 
       },
       //結果（生活輔導員強硬要求你參與活動）：團康甩手功.png   41\42
       h3: {
-        bg: '38new.png',
+        bg: '38ne.png',
         speech: '台北車站大廳內，坐在紙箱上滑短影音的阿進分享，他聽老一輩街友說安置機構環境好，但入住後，他卻幻想破滅。',
         autoNext: 'h4',
         choices: [] 
       },
       h4: {
-        bg: '38new.png',
+        bg: '38ne.png',
         speech: '他解釋：「剛進去的街友會被那些老街友管，而且他的口氣不是很好，我有被關過，比在監獄還要難過。」阿進說：「社工他們的口氣真的非常非常不好，而且被管得死死的，他們永遠都是沒有錯的。」',
         autoNext: 'ggg',
         choices: [] 
@@ -1137,4 +1148,3 @@ function renderScene(id){
 </script>
 </body>
 </html>
-
