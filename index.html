@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>街後餘生</title>
+<!--① 取代 / 加在原 viewport，重點是 viewport-fit=cover -->
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+      <style>
+        /* ---------------- 全域 ---------------- */
+        *{box-sizing:border-box;margin:0;padding:0;}
+        html,body{width:100%;height:100%;overflow:hidden;font-family:sans-serif;}
+      
+        /* ---------------- 共用容器（桌機為 375×667 卡片） ---------------- */
+        #loadingScreen,
+        #preContainer,
+        #gameContainer{
+          position:fixed;          /* 置中用 fixed + translate */
+          top:0;
+          left:50%;
+          transform:translateX(-50%);
+          width:375px;             /* 卡片寬 */
+          height:667px;            /* 卡片高 */
+          padding-top:var(--safe-top);
+          padding-bottom:var(--safe-bot);
+        }
+      
+        /* iPhone 安全區 */
+        :root{
+          --safe-top: env(safe-area-inset-top, 0px);
+          --safe-bot: env(safe-area-inset-bottom, 0px);
+        }
+      
+        /* ---------------- loading 畫面 ---------------- */
+        #loadingScreen{
+          background:#000 url('assets/sad.png') center/cover no-repeat;
+          display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:100;
+        }
+        #loadingBar{width:80%;height:10px;background:#444;border-radius:5px;overflow:hidden;margin-top:10px;}
+        #loadingProgress{width:0;height:100%;background:#fff;}
+        #loadingText{color:#fff;font-size:18px;}
+      
+        /* ---------------- preContainer 封面 / 影片 / 圖片 ---------------- */
+        #preContainer video,
+        #preContainer img:not(#laiReplyBtn):not(#agreementImg):not(#readBtn){
+          position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;
+        }
+        #tapHint,
+        #loadingText,
+        #loadingBar,
+        #choicesContainer{
+          bottom:calc(var(--safe-bot) + 20px);
+        }
+        #preContainer #agreementImg{position:absolute;top:0;left:0;width:100%;height:auto;object-fit:contain;display:none;z-index:150;}
+        #preContainer #laiReplyBtn,
+        #preContainer #readBtn{
+          position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+          width:300px;height:auto;cursor:pointer;display:none;z-index:200;
+        }
+        #tapHint{
+          position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:100%;
+          text-align:center;color:#fff;font-size:16px;text-shadow:none;z-index:120;display:none;
+        }
+      
+        /* ---------------- gameContainer 主劇情 ---------------- */
+        #gameContainer{               /* ← 只出現這一次 */
+          display:none;               /* 預設不顯示 */
+          overflow:hidden;
+          border:1px solid #ccc;
+          box-shadow:0 0 12px rgba(0,0,0,.2);
+          z-index:10;
+        }
+        #bgImage{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1;}
+        #speechText{
+          position:absolute;bottom:150px;left:5%;width:90%;
+          padding:12px 16px;background:rgba(255,255,255,.8);
+          font-size:16px;border-radius:12px;line-height:1.5;z-index:3;text-align:left;
+        }
+        #choicesContainer{
+          position:absolute;bottom:15px;left:50%;transform:translateX(-50%);
+          width:90%;display:flex;flex-direction:column;align-items:center;z-index:4;
+        }
+        .choice-button{
+          width:100%;padding:12px 16px;margin:8px 0;
+          border:2px solid #000;border-radius:15px;background:#fff;font-size:15px;cursor:pointer;
+        }
+        .choice-button:hover{background:#f0f0f0;}
+        #clickOverlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;}
+        #overlayContainer img,
+        #overlayContainer video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
+      
+        /* ---------------- 手機 ≤480px：拉滿全螢幕 ---------------- */
+        @media (max-width:480px){
+          #loadingScreen,
+          #preContainer,
+          #gameContainer{
+            left:0;                  /* 取消 50% 偏移 */
+            transform:none;
+            width:100vw;             /* 吃滿寬 */
+            height:100dvh;           /* 動態視口高 */
+            border:none;             /* 手機不留邊框 */
+            box-shadow:none;
+          }
+        }
+      </style>      
+</head>
+<body>
+  <!-- 載入畫面 -->
+  <div id="loadingScreen">
+    <div id="loadingText">0%</div>
+    <div id="loadingBar"><div id="loadingProgress"></div></div>
+  </div>
+
+  <!-- 前置流程 -->
+  <div id="preContainer" style="display:none;">
+    <video id="introVideo"
+    src="assets/簡短開場白影片.mp4"
+    muted
+    playsinline></video>
+    <div id="tapHint">點擊螢幕繼續</div>
+    <img id="laiBackground" src="assets/賴背景.png" style="display:none;z-index:1;">
+    <div id="overlayContainer"></div>
+    <img id="laiReplyBtn" src="assets/賴回覆按鈕.png">
+    <img id="agreementImg" src="assets/生活公約03.png">
+    <img id="readBtn"  src="assets/我已閱讀按鈕.png">
+  </div>
+
+  <!-- 主劇情 -->
+  <div id="gameContainer">
+    <img id="bgImage" src="" alt="背景圖">
+    <div id="speechText"></div>
+    <div id="choicesContainer"></div>
+    <div id="clickOverlay"></div>
+  </div>
+
+<script>
+/* ---------- 劇情資料 ---------- */
+const scenes={
+  accept: {
+        bg: 'day3.png',
+        speech: '第一次踏進安置機構，印入我眼簾的這棟雙層樓的老屋，鐵皮屋頂鏽蝕、牆面斑駁，但中庭寬闊，四周圍繞著寢室。',
+        autoNext: 'd1',
+        choices: [] 
+      },
+      d1: {
+        bg: 'day3.png',
+        speech: '房內擺滿雙層床，金屬床架沿牆排開，空間顯得擁擠而充滿生活感。這裡或許稱不上舒適，但至少給了許多和我一樣的街友一個棲身之所。',
+        autoNext: 'd2',
+        choices: []
+      },
+      d2: {
+        bg: 'day3.png',
+        speech: '對我來說，一切還很陌生，還不太知道該怎麼開始新的生活。',
+        choices: [
+          { text: '決定先觀察一陣子，獨自在房間休息', next: 'bbb' },
+          { text: '趕快嘗試看看能不能適應新生活', next: 'aaa' }
+        ]
+      },
+      aaa: {
+        bg: '團康甩手功.png',
+        speech: '吃完早餐，社工公布今天的團康活動，全體住民都要參加手工藝課。',
+        autoNext: 'd3',
+        choices: []
+      },
+      d3: {
+        bg: '團康甩手功.png',
+        speech: '聽到社工的公告，有些老住民已經習慣的開始動作，我卻還坐在角落。',
+        autoNext: 'd4',
+        choices: []
+      },
+      d4: {
+        bg: '團康甩手功.png',
+        speech: '不清楚這些安排對我有沒有幫助，而且我還不太認識這邊的其他住民和生活輔導員⋯⋯',
+        choices: [
+          { text: '不願參加，找理由推託', next: 'g1' },
+          { text: '勉強參加，但覺得無聊', next: 'h1' }
+        ]
+      },
+      //結果（生活輔導員發現你在團體活動時間躲在房間內、是否參加安置機構團康活動）：團康甩手功.png   38~40
+      g1: {
+        bg: '38new.png',
+        speech: '有些安置機構會安排每天固定的團體活動，若無正當理由一定要參與。新北市街友中途之家社會重建中心丁昆祥主任分享，團體活動包含三餐、甩手功、園藝、DIY、手工，另外還有就業訓練和物理治療。',
+        autoNext: 'g2',
+        choices: [] 
+      },
+      g2: {
+        bg: '38new.png',
+        speech: '65歲的街友小王（化名）回憶自己之前住在安置機構時的生活，語帶壓抑地說：「24小時都被圈在裡面，什麼時間該做什麼，通通被規定好，像軍隊一樣。」小王回憶道，語氣中透著壓抑。',
+        autoNext: 'ddd',
+        choices: [] 
+      },
+      //結果（生活輔導員發現你在團體活動時間躲在房間內、是否參加安置機構團康活動）：團康甩手功.png   38~40
+      h1: {
+        bg: '38new.png',
+        speech: '有些安置機構會安排每天固定的團體活動，若無正當理由一定要參與。新北市街友中途之家社會重建中心丁昆祥主任分享，團體活動包含三餐、甩手功、園藝、DIY、手工，另外還有就業訓練和物理治療。',
+        autoNext: 'h2',
+        choices: [] 
+      },
+      h2: {
+        bg: '38new.png',
+        speech: '65歲的街友小王（化名）回憶自己之前住在安置機構時的生活，語帶壓抑地說：「24小時都被圈在裡面，什麼時間該做什麼，通通被規定好，像軍隊一樣。」小王回憶道，語氣中透著壓抑。',
+        autoNext: 'ccc',
+        choices: [] 
+      },
+      bbb: {
+        bg: 'day04.png',
+        speech: '早上的團體活動時間，住在街頭多年的我早就過慣了沒日沒夜的生活，只想躺著休息。',
+        autoNext: 'd5',
+        choices: []
+      },
+      d5: {
+        bg: 'day04.png',
+        speech: '但才剛躺下，生活輔導員就在門口催促我：「起來囉，要去打掃跟做早操了，每天早上都要，大家都得去。」',
+        autoNext: 'd6',
+        choices: []
+      },
+      d6: {
+        bg: 'day04.png',
+        speech: '我知道這是規定，但真的不太習慣這種被安排好的團體生活⋯⋯',
+        choices: [
+          { text: '草草應付參加活動', next: 'h1' },
+          { text: '拒絕並表現不滿', next: 'g1' }
+        ]
+      },      
+      ddd: {
+        bg: '強制參加團康活動.png',
+        speech: '生活輔導員擋在活動室門口，他看起來還年輕氣盛，語氣強硬：',
+        autoNext: 'd7',
+        choices: []
+      },
+      d7: {
+        bg: '強制參加團康活動.png',
+        speech: '「規定就是規定，每個人都要參加團康活動。」',
+        autoNext: 'd8',
+        choices: []
+      },
+      d8: {
+        bg: '強制參加團康活動.png',
+        speech: '他舉起手指向裡頭擺動，像是在催促我趕快進到活動教室。',
+        autoNext: 'd9',
+        choices: []
+      },
+      d9: {
+        bg: '強制參加團康活動.png',
+        speech: '生輔員用這種態度對我頤指氣使，讓我心裡一陣不舒服⋯⋯',
+        choices: [
+          { text: '壓下情緒，走進活動室', next: 'g3' },
+          { text: '被他那語氣惹毛，懶得理會', next: 'h3' }
+        ]
+      },
+      //結果（生活輔導員強硬要求你參與活動）：團康甩手功.png   41\42
+      g3: {
+        bg: '38new.png',
+        speech: '台北車站大廳內，坐在紙箱上滑短影音的阿進分享，他聽老一輩街友說安置機構環境好，但入住後，他卻幻想破滅。',
+        autoNext: 'g4',
+        choices: [] 
+      },
+      g4: {
+        bg: '38new.png',
+        speech: '他解釋：「剛進去的街友會被那些老街友管，而且他的口氣不是很好，我有被關過，比在監獄還要難過。」阿進說：「社工他們的口氣真的非常非常不好，而且被管得死死的，他們永遠都是沒有錯的。」',
+        autoNext: 'b2',
+        choices: [] 
+      },
+      //結果（生活輔導員強硬要求你參與活動）：團康甩手功.png   41\42
+      h3: {
+        bg: '38new.png',
+        speech: '台北車站大廳內，坐在紙箱上滑短影音的阿進分享，他聽老一輩街友說安置機構環境好，但入住後，他卻幻想破滅。',
+        autoNext: 'h4',
+        choices: [] 
+      },
+      h4: {
+        bg: '38new.png',
+        speech: '他解釋：「剛進去的街友會被那些老街友管，而且他的口氣不是很好，我有被關過，比在監獄還要難過。」阿進說：「社工他們的口氣真的非常非常不好，而且被管得死死的，他們永遠都是沒有錯的。」',
+        autoNext: 'ggg',
+        choices: [] 
+      },
+      ggg: {
+        bg: '苦惱的我.png',
+        speech: '我受不了機構的制度與規範，每天都像被困住一樣。',
+        autoNext: 'd10',
+        choices: []
+      },
+      d10: {
+        bg: '苦惱的我.png',
+        speech: '我向社工遞出了離宿申請。',
+        autoNext: 'd11',
+        choices: []
+      },
+      d11: {
+        bg: '苦惱的我.png',
+        speech: '當一切手續辦妥，你帶著簡單的行李離開，踏上了未知的街頭。',
+        choices: [
+          { text: '受不了制度管束，決定離開', next: 'b1' },
+        ]
+      },
+      b1: {
+        bg: '苦惱的我.png',
+        speech: '離開機構已經兩三個月，重新回到街頭的生活比之前更艱難。',
+        autoNext: 'd12',
+        choices: []
+      },
+      d12: {
+        bg: '苦惱的我.png',
+        speech: '夜晚寒冷刺骨，身體也因長期勞累而愈發疲憊。街頭的生活比記憶中更苦、更不堪。',
+        autoNext: 'd13',
+        choices: []
+      },
+      d13: {
+        bg: '苦惱的我.png',
+        speech: '我面對殘酷的街頭，終究拉了下臉，聯絡社工申請回到機構，再給自己一次機會。',
+        choices: [
+          { text: '回到機構，再試試看努力脫離街頭生活❗ 計一點', next: 'g5' },
+        ]
+      },
+      //結果（主動離開）：北車街頭.png     43\44
+      g5: {
+        bg: '39.png',
+        speech: '新北市社會局社會救助科代理科長郭宏昇說明，社會局做過街友普查，街友選擇不住安置機構的原因是嚮往自由。「中途之家不是監獄，他要請假、要出去都可以，規範的初衷是保護（機構住民），但畢竟還是有規律的作息規範， 街友就很難跨過這關。」',
+        autoNext: 'd20',
+        choices: [] 
+      },
+      d20: {
+        bg: '交友圈.png',
+        speech: '回到這裡，你發現機構裡的人三三兩兩都有自己的交友圈，吃飯有人陪、晚上有人聊天，只有我總是一個人。',
+        autoNext: 'd21',
+        choices: []
+      },
+      d21: {
+        bg: '交友圈.png',
+        speech: '不是沒試著加入過，只是話題我聽不懂、氣氛也插不進去。那股被孤立的感覺越來越重，這樣的孤單，讓我開始動搖⋯⋯',
+        choices: [
+          { text: '躲回原本的生活習慣，依舊獨自一人', next: 'lll' },
+          { text: '試著融入他們', next: 'mmm' }
+        ]
+      },
+      ccc: {
+        bg: '交友圈.png',
+        speech: '我試著草草應付參加活動，但機構裡的人三三兩兩都有自己的交友圈，吃飯有人陪、晚上有人聊天，只有我總是一個人。',
+        autoNext: 'd14',
+        choices: []
+      },
+      d14: {
+        bg: '交友圈.png',
+        speech: '不是沒試著加入過，只是話題我聽不懂、氣氛也插不進去。那股被孤立的感覺越來越重，這樣的孤單，讓我開始動搖⋯⋯',
+        choices: [
+          { text: '躲回原本的生活習慣，依舊獨自一人', next: 'lll' },
+          { text: '試著融入他們', next: 'mmm' }
+        ]
+      },
+      b2: {
+        bg: '交友圈.png',
+        speech: '生活輔導員強硬要求我參與活動，只好強忍不滿勉強跟著去。',
+        autoNext: 'd15',
+        choices: []
+      },
+      d15: {
+        bg: '交友圈.png',
+        speech: '我試著草草應付參加活動，但機構裡的人三三兩兩都有自己的交友圈，吃飯有人陪、晚上有人聊天，只有我總是一個人。',
+        autoNext: 'd16',
+        choices: []
+      },
+      d16: {
+        bg: '交友圈.png',
+        speech: '不是沒試著加入過，只是話題我聽不懂、氣氛也插不進去。那股被孤立的感覺越來越重，這樣的孤單，讓我開始動搖⋯⋯',
+        choices: [
+          { text: '躲回原本的生活習慣，依舊獨自一人', next: 'lll' },
+          { text: '試著融入他們', next: 'mmm' }
+        ]
+      },
+      jjj: {
+        bg: '室友很煩.png',
+        speech: '我和一名室友共用一個房間，但他晚上總是不睡覺，一直抱怨社會的不公平和生活的艱辛。聲音讓你難以入眠，心情也漸漸煩躁⋯⋯',
+        choices: [
+          { text: '試圖溝通，你決定跟室友談談', next: 'd40' },
+          { text: '逃避與人相處，暫時避免正面衝突', next: 'd25' }
+        ]
+      },
+      d25: {//室友很煩
+        bg: '想喝酒.png',
+        speech: '我的室友晚上總是不睡覺，還不停抱怨社會，讓我心煩意亂只想躲開人群。',
+        autoNext: 'd26',
+        choices: []
+      },
+      d26: {//室友很煩
+        bg: '想喝酒.png',
+        speech: '過去街頭生活時染上的菸酒癮又犯上心頭，想靠菸酒稍稍緩解孤獨和身體的不適，但在這裡這些都被禁止。',
+        autoNext: 'd27',
+        choices: []
+      },
+      d27: {//室友很煩
+        bg: '想喝酒.png',
+        speech: '此刻你很想喝酒解悶，掙扎著到底是忍住，還是偷偷喝一點，讓自己暫時放鬆⋯⋯',
+        choices: [
+          { text: '偷喝一點，解解悶也好', next: 'g6' },
+          { text: '忍住，反正這裡不能碰酒，硬撐一下', next: 'h6' }
+        ]
+      },
+      lll: {//交友圈
+        bg: '想喝酒.png',
+        speech: '在機構大家都有自己的交友圈，我總感到自己被孤立，心裡越來越孤單難耐。',
+        autoNext: 'd30',
+        choices: []
+      },
+      d30: {//交友圈
+        bg: '想喝酒.png',
+        speech: '過去街頭生活時染上的菸酒癮又犯上心頭，想靠菸酒稍稍緩解孤獨和身體的不適，但在這裡這些都被禁止。',
+        autoNext: 'd31',
+        choices: []
+      },
+      d31: {//交友圈
+        bg: '想喝酒.png',
+        speech: '此刻你很想喝酒解悶，掙扎著到底是忍住，還是偷偷喝一點，讓自己暫時放鬆⋯⋯',
+        choices: [
+          { text: '偷喝一點，解解悶也好', next: 'g6' },
+          { text: '忍住，反正這裡不能碰酒，硬撐一下', next: 'h6' }
+        ]
+      },
+      //結果（喝酒解悶）：想喝酒.png       45
+      g6: {
+        bg: '40.png',
+        speech: '「 裡面當然是不能喝酒，（酒）使用差不多30多年，也不是說戒就戒。」阿進（化名）道。禁酒是安置機構最為普遍的規範，但有些街友有酒癮，很難一時戒掉，他們因此感到困擾。',
+        autoNext: 'ppp',
+        choices: [] 
+      },
+      //結果（喝酒解悶）：想喝酒.png       45
+      h6: {
+        bg: '40.png',
+        speech: '「 裡面當然是不能喝酒，（酒）使用差不多30多年，也不是說戒就戒。」阿進（化名）道。禁酒是安置機構最為普遍的規範，但有些街友有酒癮，很難一時戒掉，他們因此感到困擾。',
+        autoNext: 'mmm',
+        choices: [] 
+      },
+      ppp: {
+        bg: '社工抓包.png',
+        speech: '你已經觸犯生活公約⚠️',
+        choices: [
+          { text: '選擇留下 ❗ 計一點', next: 'd40' },
+          { text: '受不了制度管束，主動決定離開', next: 'b8' }
+        ]
+      },
+      b8: {//喝酒回街頭
+        bg: '苦惱的我.png',
+        speech: '離開機構已經兩三個月，重新回到街頭的生活比之前更艱難。夜晚寒冷刺骨，身體也因長期勞累而愈發疲憊。街頭的生活比記憶中更苦、更不堪。於是，你決定聯絡社工，申請回到機構，再給自己一次機會。',
+        choices: [
+          { text: '回到機構，再試試看努力脫離街頭生活❗ 計一點', next: 'd40' },
+        ]
+      },
+      d40: {//喝酒回街頭<回來職涯課
+        bg: '職涯課.png',
+        speech: '某天下午，社工廣播我到辦公室，語氣認真地說：',
+        autoNext: 'd41',
+        choices: []
+      },
+      d41: {//喝酒回街頭<回來職涯課
+        bg: '職涯課.png',
+        speech: '「這門職能課你應該考慮看看，對現在的你會有幫助。」',
+        autoNext: 'd42',
+        choices: []
+      },
+      d42: {//喝酒回街頭<回來職涯課
+        bg: '職涯課.png',
+        speech: '課程教的是環保清潔這類比較好上手的工作技能。',
+        autoNext: 'd43',
+        choices: []
+      },
+      d43: {//喝酒回街頭<回來職涯課
+        bg: '職涯課.png',
+        speech: '他強調這是重新進入職場的一個起點，很多人上完課真的找到工作。',
+        autoNext: 'd44',
+        choices: []
+      },
+      d44: {//喝酒回街頭<回來職涯課
+        bg: '職涯課.png',
+        speech: '我最近才剛從街頭又回到機構，希望再給自己一次自立生活的機會。',
+        autoNext: 'd45',
+        choices: []
+      },
+      d45: {//喝酒回街頭<回來職涯課
+        bg: '職涯課.png',
+        speech: '我點點頭，但我也聽說外面有些工作自由、薪水更好——',
+        autoNext: 'd46',
+        choices: []
+      },
+      d46: {//喝酒回街頭<回來職涯課
+        bg: '職涯課.png',
+        speech: '如果自己去找，會不會更適合現在自己的身體的狀況？',
+        choices: [
+          { text: '拒絕參加，想自己去外面找工作', next: 'g7' },
+          { text: '接受安排，努力表現', next: 'h7' }
+        ]
+      },
+      //結果（社工邀你參加職場見習）：職涯課.png      46\47
+      g7: {
+        bg: '41.png',
+        speech: '除了常見的生活規範，每間安置機構還會根據其服務對象的特性與目標，制定更具彈性的管理方式。例如，協助街友快速重返職場的機構，允許住民因工作需求調整門禁時間，或提供更多職能訓練與就業媒合機會。',
+        autoNext: 'g8',
+        choices: [] 
+      },
+      g8: {
+        bg: '41.png',
+        speech: '部分機構也會要求住民參與團體活動或心理輔導，藉此提升社會適應能力，確保未來能夠順利融入社會。',
+        autoNext: 'ttt',
+        choices: [] 
+      },
+      //結果（社工邀你參加職場見習）：職涯課.png      46\47
+      h7: {
+        bg: '41.png',
+        speech: '除了常見的生活規範，每間安置機構還會根據其服務對象的特性與目標，制定更具彈性的管理方式。例如，協助街友快速重返職場的機構，允許住民因工作需求調整門禁時間，或提供更多職能訓練與就業媒合機會。',
+        autoNext: 'h8',
+        choices: [] 
+      },
+      h8: {
+        bg: '41.png',
+        speech: '部分機構也會要求住民參與團體活動或心理輔導，藉此提升社會適應能力，確保未來能夠順利融入社會。',
+        autoNext: 'uuu',
+        choices: [] 
+      },
+      mmm: {//忍住不喝酒
+        bg: '職涯課.png',
+        speech: '我最近努力戒酒，想把生活慢慢拉回正軌。某天下午，社工廣播我到辦公室，語氣認真地說：',
+        autoNext: 'd41',
+        choices: []
+      },
+      ttt: {//去外面找工作
+        bg: '找工作.png',
+        speech: '我決定先不參加社工安排的職能課，試著自己去市區找自己應付得來又能多賺點錢的工作。',
+        autoNext: 'd51',
+        choices: []
+      },
+      d51: {//去外面找工作
+        bg: '找工作.png',
+        speech: '每天一早出門，搭車進城，問了好幾家搬運廠和清潔公司，但不是嫌我腿腳不方便，就是說年紀太大。',
+        autoNext: 'd52',
+        choices: []
+      },
+      d52: {//去外面找工作
+        bg: '找工作.png',
+        speech: '住的安置機構離市區遠，回程還得抓緊時間，不然趕不上門禁，要晚歸還得先和社工申請，來回折騰。',
+        autoNext: 'd53',
+        choices: []
+      },
+      d53: {//去外面找工作
+        bg: '找工作.png',
+        speech: '就算晚上有地方睡、不用露宿街頭，這樣找工作還是十分困難⋯⋯',
+        choices: [
+          { text: '找不到工作，決定回到機構', next: 'b9' }
+        ]
+      },
+      b9: {
+        bg: '社工推薦打掃工作.png',
+        speech: '經過一陣子自己找工作沒著落後，我決定回到安置機構。',
+        autoNext: 'd54',
+        choices: []
+      },
+      d54: {
+        bg: '社工推薦打掃工作.png',
+        speech: '社工安排我成為機構的清潔工，每天你負責清掃不同樓層，雖然工作辛苦，但我終於久違的感受到規律的生活節奏。',
+        autoNext: 'd55',
+        choices: []
+      },
+      d55: {
+        bg: '社工推薦打掃工作.png',
+        speech: '但這份工作時常讓你感到疲憊，身體也多少有點吃不消⋯⋯',
+        choices: [
+          { text: '你每天清掃不同樓層，雖然辛苦，還是撐了下來。', next: 'zzz' }
+        ]
+      },
+      uuu: {//上課表現良好
+        bg: '社工推薦打掃工作.png',
+        speech: '我在機構內的職能課表現良好，社工安排我成為機構的清潔工。',
+        autoNext: 'd56',
+        choices: []
+      },
+      d56: {//上課表現良好
+        bg: '社工推薦打掃工作.png',
+        speech: '每天我負責清掃不同樓層，雖然工作辛苦，但我終於久違的感受到規律的生活節奏。',
+        autoNext: 'd57',
+        choices: []
+      },
+      d57: {//上課表現良好
+        bg: '社工推薦打掃工作.png',
+        speech: '但這份工作時常讓你感到疲憊，身體也多少有點吃不消⋯⋯',
+        choices: [
+          { text: '你每天清掃不同樓層，雖然辛苦，還是撐了下來。', next: 'zzz' }
+        ]
+      },
+      zzz: {
+        bg: '給社工管錢.png',
+        speech: '我靠著清潔工的工作，慢慢存下了一些錢。',
+        autoNext: 'd60',
+        choices: []
+      },
+      d60: {
+        bg: '給社工管錢.png',
+        speech: '某天，社工提議幫我開戶，說這樣比較安全，也方便規劃金錢使用。',
+        autoNext: 'd61',
+        choices: []
+      },
+      d61: {
+        bg: '給社工管錢.png',
+        speech: '還說，也可以選擇讓他們代管金錢，或是自己保管但要定期讓他們了解金錢流向。',
+        autoNext: 'd62',
+        choices: []
+      },
+      d62: {
+        bg: '給社工管錢.png',
+        speech: '「不是要限制你，而是希望你慢慢建立使用金錢的習慣，將來比較好生活。」',
+        autoNext: 'd63',
+        choices: []
+      },
+      d63: {
+        bg: '給社工管錢.png',
+        speech: '我點點頭，但心裡不免猶豫──錢是你辛苦賺來的，真的要讓人過問嗎？',
+        choices: [
+          { text: '拒絕，不想讓別人管自己怎麼花錢', next: 'a1' },
+          { text: '配合開戶，嘗試建立穩定的金錢規劃', next: 'g9' }
+        ]
+      },
+      //結果（你成功存到一筆錢，社工希望幫你開戶）：給社工管錢.png   48~50v
+      g9: {
+        bg: '42.png',
+        speech: '重建中心主任丁琨祥分享，為了培養良好的金錢使用習慣，他們會透過社工管理街友存款與薪資，幫助街友存到可以租屋的錢。',
+        autoNext: 'g10',
+        choices: [] 
+      },
+      g10: {
+        bg: '42.png',
+        speech: '干預的方式有兩種，首先是由社工代管金錢，使用時需向社工申請。若不想被管制，則要定期刷存簿，讓社工了解金錢的使用狀況。',
+        autoNext: 'a2',
+        choices: [] 
+      },
+      a1: {
+        bg: '沒錢了.png',
+        speech: '我還是拒絕了社工的建議，覺得錢自己存、自己花才自在。',
+        autoNext: 'd64',
+        choices: []
+      },
+      d64: {
+        bg: '沒錢了.png',
+        speech: '但沒過多久，你領了薪水就放身上，每次都不小心多花一些。',
+        autoNext: 'd65',
+        choices: []
+      },
+      d65: {
+        bg: '沒錢了.png',
+        speech: '街頭時養成「有錢先用」的習慣，讓你不知不覺把一點一滴存下來的錢，全花光了⋯⋯',
+        choices: [
+          { text: '再次找社工，申請開戶與金錢管理', next: 'a2' }
+        ]
+      },
+      a2: {
+        bg: '戒菸酒.png',
+        speech: '我開始試著重建生活，盡力把注意力從酒和香菸上移開。',
+        autoNext: 'd66',
+        choices: []
+      },
+      d66: {
+        bg: '戒菸酒.png',
+        speech: '每天打掃完回到房間，就早點休息、不讓自己太閒。',
+        autoNext: 'd67',
+        choices: []
+      },
+      d67: {
+        bg: '戒菸酒.png',
+        speech: '偶爾還是會想起過去在街頭，一有錢就拿去換成酒精或煙霧的習慣，但會提醒自己不能再那樣過下去。',
+        autoNext: 'd68',
+        choices: []
+      },
+      d68: {
+        bg: '戒菸酒.png',
+        speech: '雖然適應新的生活並不容易，但我感覺生活終於慢慢穩定下來了。',
+        autoNext: 'a3',
+        choices: []
+      },
+      a3: {
+        bg: '買飲料.png',
+        speech: '我的生活漸漸穩定，雖然工作不輕鬆，但已逐漸適應，酒菸也慢慢戒掉。',
+        autoNext: 'd69',
+        choices: []
+      },
+      d69: {
+        bg: '買飲料.png',
+        speech: '下班後，你會申請短暫離開機構，買杯飲料，在外頭巷口走走。',
+        autoNext: 'd70',
+        choices: []
+      },
+      d70: {
+        bg: '買飲料.png',
+        speech: '有時會捨不得這麼早回去，但門禁時間快到了⋯⋯',
+        choices: [
+          { text: '依約時間返回機構', next: 'g11' },
+          { text: '無視門禁時間，在巷口散步', next: 'h11' }
+        ]
+      },
+      //結果（出去透透氣）：買飲料.png       51\52
+      g11: {
+        bg: '43.png',
+        speech: '每個安置機構門禁時間皆不同，圓通居的門禁是晚上九點半至早上九點，除了外出工作外，其餘時段出門都需向社工請假。「租房子至少比這裡還快樂，像這裡（要等）社工早上來開假單，你才能出去。」現住圓通居的小明（化名）道。',
+        autoNext: 'a4',
+        choices: [] 
+      },
+      //結果（出去透透氣）：買飲料.png       51\52
+      h11: {
+        bg: '43.png',
+        speech: '每個安置機構門禁時間皆不同，圓通居的門禁是晚上九點半至早上九點，除了外出工作外，其餘時段出門都需向社工請假。「租房子至少比這裡還快樂，像這裡（要等）社工早上來開假單，你才能出去。」現住圓通居的小明（化名）道。',
+        autoNext: 'a5',
+        choices: [] 
+      },
+      a5: {
+        bg: '超時.png',
+        speech: '你知道這裡有門禁，但那天實在太煩了。只是想出去透透氣，不會走遠，也不會太久，應該不會被發現。',
+        autoNext: 'd71',
+        choices: []
+      },
+      d71: {
+        bg: '超時.png',
+        speech: '於是你走到巷口，抽了根菸，讓腦袋清醒一下。',
+        autoNext: 'd72',
+        choices: []
+      },
+      d72: {
+        bg: '超時.png',
+        speech: '回來時，門口燈還亮著，夜班警衛靠在牆邊，手插著口袋，看見你時臉上一點表情都沒有。',
+        autoNext: 'd73',
+        choices: []
+      },
+      d73: {
+        bg: '超時.png',
+        speech: '他掃了你一眼，只淡淡地說：「超時，記一點。」',
+        choices: [
+          { text: '你沒回話❗ 計一點', next: 'a8' },
+        ]
+      },
+      a4: {//依約回機構
+        bg: '翻包包.png',
+        speech: '久違的走到機構外透透氣，但我已經大致習慣安置的生活，沒有在外多逗留。',
+        autoNext: 'd74',
+        choices: []
+      },
+      d74: {//依約回機構
+        bg: '翻包包.png',
+        speech: '回到機構後社工依規定請要求我配合搜身，檢查是否攜帶違禁品。',
+        autoNext: 'd75',
+        choices: []
+      },
+      d75: {//依約回機構
+        bg: '翻包包.png',
+        speech: '我覺得即使住在機構中，也應該保有基本的生活隱私和尊嚴。',
+        autoNext: 'd76',
+        choices: []
+      },
+      d76: {//依約回機構
+        bg: '翻包包.png',
+        speech: '這樣的檢查，讓我感受到一絲壓迫與不舒服。',
+        choices: [
+          { text: '配合搜身', next: 'g12' },
+          { text: '即使會被記點，仍拒絕搜身', next: 'h12' }
+        ]
+      },
+      //結果（社工依規定請你配合搜身，檢查是否有攜帶違禁品）：翻包包.png  53\55
+      g12: {
+        bg: '44.png',
+        speech: '街友外出採購日用品回來，也需給社工檢查是否有帶違禁品。反覆住過三次安置機構的王永富抱怨，外出回來時，檢查人員的手會在袋子裡面撈來撈去，不僅侵犯自尊，還有衛生疑慮。',
+        autoNext: 'g13',
+        choices: [] 
+      },
+      g13: {
+        bg: '44.png',
+        speech: '「手在裡面撈來撈去已經超過正常範圍了，一副高高在上的樣子，（我）沒錢才來這裡，哪有錢買那些，更何況我最討厭酒。」他憤怒地說道。',
+        autoNext: 'a6',
+        choices: [] 
+      },
+      //結果（社工依規定請你配合搜身，檢查是否有攜帶違禁品）：翻包包.png  53\55
+      h12: {
+        bg: '44.png',
+        speech: '街友外出採購日用品回來，也需給社工檢查是否有帶違禁品。反覆住過三次安置機構的王永富抱怨，外出回來時，檢查人員的手會在袋子裡面撈來撈去，不僅侵犯自尊，還有衛生疑慮。',
+        autoNext: 'h13',
+        choices: [] 
+      },
+      h13: {
+        bg: '44.png',
+        speech: '「手在裡面撈來撈去已經超過正常範圍了，一副高高在上的樣子，（我）沒錢才來這裡，哪有錢買那些，更何況我最討厭酒。」他憤怒地說道。',
+        autoNext: 'a9',
+        choices: [] 
+      },
+      a6: {//綠色結局
+        bg: '租屋.png',
+        speech: '從努力參與職場見習，接下機構內的清潔工作，生活逐漸有了規律。一開始很難，但你慢慢撐下來了。',
+        autoNext: 'a20',
+        choices: []
+      },
+      a20: {//綠色結局
+        bg: '租屋.png',
+        speech: '你學會如何安排自己的收入，也逐漸存下一筆錢。',
+        autoNext: 'a21',
+        choices: []
+      },
+      a21: {//綠色結局
+        bg: '租屋.png',
+        speech: '幾個月後，在社工的協助下，找到一份機構外的穩定工作，收入也能順利租下一間小套房。',
+        autoNext: 'a22',
+        choices: []
+      },
+      a22: {//綠色結局
+        bg: '租屋.png',
+        speech: '拉著行李站在人來人往的街口時，你忽然有了自己成功脫遊的實感——',
+        autoNext: 'a23',
+        choices: []
+      },
+      a23: {//綠色結局
+        bg: '租屋.png',
+        speech: '自己終於離開了那段過渡時期，重新走回屬於自己的生活。',
+        autoNext: 'a24',
+        choices: []
+      },
+      a8: {//剛超過門禁，翻包
+        bg: '翻包包.png',
+        speech: '你剛超過門禁被記點',
+        autoNext: 'd80',
+        choices: []
+      },
+      d80: {//剛超過門禁，翻包
+        bg: '翻包包.png',
+        speech: '社工又要求我配合搜身，檢查是否攜帶違禁品。',
+        autoNext: 'd81',
+        choices: []
+      },
+      d81: {//剛超過門禁，翻包
+        bg: '翻包包.png',
+        speech: '我覺得即使住在機構中，也應該保有基本的生活隱私和尊嚴。',
+        autoNext: 'd82',
+        choices: []
+      },
+      d82: {//剛超過門禁，翻包
+        bg: '翻包包.png',
+        speech: '這樣的檢查，讓我感受到一絲壓迫與不舒服。',
+        choices: [
+          { text: '配合搜身', next: 'g12' },
+          { text: '即使會被記點，仍拒絕搜身', next: 'h12' }
+        ]
+      },
+      a9: {
+        bg: '翻包2.png',
+        speech: '你不想配合搜身。不是因為帶了什麼，只是心裡過不去那道線。',
+        autoNext: 'd84',
+        choices: []
+      },
+      d84: {
+        bg: '翻包2.png',
+        speech: '那種被翻包檢查的感覺，讓你想到過去在街頭被懷疑的經驗。你以為住進來之後，至少能保有一點基本的尊嚴。',
+        autoNext: 'd85',
+        choices: []
+      },
+      d85: {
+        bg: '翻包2.png',
+        speech: '社工沒多說，只提醒你：「不配合，還是要記一點。」',
+        autoNext: 'd86',
+        choices: []
+      },
+      d86: {
+        bg: '翻包2.png',
+        speech: '你遲遲沒有回話，只是有些猶豫，你還要不要繼續待在這裡受這些制度約束？',
+        choices: [
+          { text: '選擇留下，讓他們記點❗ 計一點', next: 'a10' },
+          { text: '你覺得這樣的生活不是你要的，決定離開，再次回到街頭', next: 'a11' }
+        ]
+      },
+      a10: {//計點還沒用，先接綠色結局
+        bg: '租屋.png',
+        speech: '你還是選擇留下，並讓社工幫忙存款。慢慢的你存到一筆存款，足夠去外面租房。在社工的幫助下你找到機構外的工作，透過安置機構的輔助，恢復職能，重建自立生活。',
+        choices: []
+      },
+      a11: {//回街頭結局
+        bg: '租屋.png',
+        speech: '那些規定與約束還是讓你喘不過氣，你再次向社工提出申請，說明自己想離開。',
+        autoNext: 'a12',
+        choices: []
+      },
+      a12: {//回街頭結局
+        bg: '租屋.png',
+        speech: '這一次，社工沒有多說什麼，你整理好簡單的行李，離開了機構。',
+        autoNext: 'a13',
+        choices: []
+      },
+      a13: {//回街頭結局
+        bg: '租屋.png',
+        speech: '回到街頭後的日子依然困苦，天氣一樣寒冷，找工作還是困難重重，身體也時不時出狀況。',
+        autoNext: 'a14',
+        choices: []
+      },
+      a14: {//回街頭結局
+        bg: '租屋.png',
+        speech: '但這一次，少了規定的早晚點名、少了行為被監督的壓力，少了那些讓你覺得不自在的制度，你反而感到一點輕鬆。',
+        autoNext: 'a15',
+        choices: []
+      },
+      a15: {//回街頭結局
+        bg: '租屋.png',
+        speech: '回到你熟悉的街頭，繼續過自由自在的日子。',
+        autoNext: 'a17',
+        choices: []
+      },
+};
+const lauDialogs=['賴對話1.png','賴對話2.png','賴對話3.png','賴對話4.png'];
+const interDialogs=['賴對話穿插1.png','賴對話穿插2.png'];
+const ruleImgs=['計點規則new1.png','計點規則new2.png','計點規則new3.png','計點規則new4.png','計點規則new5.png','計點規則new6.png'];
+const videoAssets=['簡短開場白影片.mp4','Line對話影片03.mp4'];
+const miscImgs=['開場白穿插對話.png'];
+
+/* 直接在 HTML 中就存在的靜態圖片 */
+const staticImgs=['sad.png','賴背景.png','賴回覆按鈕.png','生活公約03.png','我已閱讀按鈕.png'];
+
+/* ---------- 載入進度 ---------- */
+const totalAssets=
+  Object.keys(scenes).length +
+  lauDialogs.length +
+  interDialogs.length +
+  ruleImgs.length +
+  videoAssets.length +
+  miscImgs.length +
+  staticImgs.length;         // ← 新增
+
+let loadedAssets=0;
+function updateLoading(){
+  loadedAssets++;
+  const pct=Math.round(loadedAssets/totalAssets*100);
+  loadingText.innerText=pct+'%';
+  loadingProgress.style.width=pct+'%';
+  if(loadedAssets>=totalAssets) setTimeout(startPre,300);
+}
+
+/* 圖片類一次加入迴圈 */
+[...staticImgs,...lauDialogs,...interDialogs,...ruleImgs,...miscImgs].forEach(f=>{
+  const img=new Image();
+  img.src=`assets/${f}`;
+  img.onload=updateLoading;
+  img.onerror=updateLoading;
+});
+
+/* 背景圖（scenes）獨立載入 */
+Object.values(scenes).forEach(s=>{
+  const img=new Image();
+  img.src=`assets/${s.bg}`;
+  img.onload=updateLoading;
+  img.onerror=updateLoading;
+});
+
+/* 影片預載 */
+/* 影片預載（整段取代舊的）*/
+videoAssets.forEach(f => {
+  const v = document.createElement('video');
+  v.src = `assets/${f}`;
+  v.preload = 'metadata';   // 只抓到長度就算完成，速度快
+  v.muted = true;           // iOS 必要條件
+  v.playsInline = true;     // 讓事件觸發
+  v.onloadedmetadata = updateLoading; // metadata 到手就 +1
+  v.onerror = updateLoading;
+});
+/* ---------- DOM ---------- */
+const tapHint=document.getElementById('tapHint');
+const showHint=()=>tapHint.style.display='block';
+const hideHint=()=>tapHint.style.display='none';
+
+const loadingScreen=document.getElementById('loadingScreen');
+const preContainer=document.getElementById('preContainer');
+const introVideo=document.getElementById('introVideo');
+const laiBg=document.getElementById('laiBackground');
+const overlayContainer=document.getElementById('overlayContainer');
+const laiReplyBtn=document.getElementById('laiReplyBtn');
+const agreementImg=document.getElementById('agreementImg');
+const readBtn=document.getElementById('readBtn');
+
+/* ---------- 狀態 ---------- */
+let stage=0;          // 0 影片1, 1 插圖, 2~5 原本流程…
+let lauIndex=0, ruleIndex=0;
+let introDone=false, lineDone=false, lineVideo=null;
+let introPicShown=false;  // <— 新增：判斷插圖是否顯示
+
+/* ---------- 開始 ---------- */
+function startPre(){
+  loadingScreen.style.display='none';
+  preContainer.style.display='block';
+  playIntro();
+}
+
+/* ---- 影片1 ---- */
+function playIntro(){
+  stage=0; introDone=false;
+  introVideo.style.display='block';
+  introVideo.play();
+  showHint();
+  introVideo.onended=()=>{ if(!introDone) endIntro(); };
+}
+function skipIntro(){ if(!introDone){ introDone=true; introVideo.pause(); endIntro(); }}
+function endIntro(){
+  introVideo.style.display='none';
+  laiBg.style.display='none';            // 先隱藏背景
+  overlayContainer.innerHTML='';
+  const img=document.createElement('img');
+  img.src='assets/開場白穿插對話.png';   // 新插圖
+  img.style.zIndex=2;
+  overlayContainer.appendChild(img);
+  introPicShown=true;
+  stage=1;                               // 進入插圖階段
+  showHint();
+}
+
+/* ---- 點擊邏輯 ---- */
+preContainer.onclick=function(e){
+  if(e.target===laiReplyBtn||e.target===readBtn) return;
+
+  if(stage===0){ skipIntro(); return; }
+  if(stage===5){ skipLine();  return; }
+
+  /* 插圖階段：點一下→顯示賴背景 */
+  if(stage===1){
+    if(introPicShown){
+      overlayContainer.innerHTML='';
+      laiBg.style.display='block';
+      introPicShown=false;
+      showHint();
+      return;                            // 下一次點擊才開始疊對話
+    }
+  }
+
+  /* Line 對話疊圖 */
+  if(stage===1){
+    if(lauIndex<lauDialogs.length){
+      const img=document.createElement('img');
+      img.src=`assets/${lauDialogs[lauIndex++]}`;img.style.zIndex=2;
+      overlayContainer.appendChild(img);
+      if(lauIndex===lauDialogs.length){ laiReplyBtn.style.display='block'; hideHint(); stage=2; }
+    }
+    return;
+  }
+  if(stage===3){
+    overlayContainer.innerHTML='';
+    const img=document.createElement('img');
+    img.src=`assets/${interDialogs[1]}`;img.style.zIndex=2;
+    overlayContainer.appendChild(img);
+    stage=4; showHint();
+    return;
+  }
+  if(stage===4){
+    overlayContainer.innerHTML='';
+    laiBg.style.display='none';
+    playLineVideo();
+    return;
+  }
+  if(stage===6){
+    if(ruleIndex<ruleImgs.length){
+      preContainer.querySelectorAll('.rule-img').forEach(i=>i.remove());
+      const img=document.createElement('img');
+      img.src=`assets/${ruleImgs[ruleIndex++]}`;img.className='rule-img';img.style.zIndex=2;
+      preContainer.appendChild(img);
+      if(ruleIndex===ruleImgs.length){ hideHint(); }
+    }
+    if(ruleIndex===ruleImgs.length){
+      preContainer.querySelectorAll('.rule-img').forEach(i=>i.remove());
+      preContainer.style.display='none';
+      startGame();
+    }
+  }
+};
+laiReplyBtn.onclick=function(e){
+  e.stopPropagation();
+  laiReplyBtn.style.display='none';
+  const img=document.createElement('img');
+  img.src=`assets/${interDialogs[0]}`;img.style.zIndex=2;
+  overlayContainer.appendChild(img);
+  stage=3; showHint();
+};
+
+/* ---- 影片2 ---- */
+function playLineVideo(){
+  stage=5; lineDone=false;
+  lineVideo=document.createElement('video');
+  lineVideo.src='assets/Line對話影片03.mp4';
+  lineVideo.autoplay=true; lineVideo.muted=true;
+  lineVideo.playsInline = true; 
+  Object.assign(lineVideo.style,{position:'absolute',top:0,left:0,width:'100%',height:'100%'});
+  preContainer.appendChild(lineVideo);
+  showHint();
+  lineVideo.onended=()=>{ if(!lineDone) endLine(); };
+}
+function skipLine(){ if(!lineDone){ lineDone=true; lineVideo.pause(); endLine(); }}
+function endLine(){
+  lineVideo.remove(); hideHint();
+  agreementImg.style.display='block';
+  readBtn.style.display='block';
+  stage=7;
+}
+
+/* ---- 已閱讀 → 規則 ---- */
+readBtn.onclick=function(e){
+  e.stopPropagation();
+  agreementImg.style.display='none';
+  readBtn.style.display='none';
+  ruleIndex=0; stage=6;
+  const img=document.createElement('img');
+  img.src=`assets/${ruleImgs[ruleIndex++]}`;img.className='rule-img';img.style.zIndex=2;
+  preContainer.appendChild(img);
+  showHint();
+};
+
+/* ---------- 主劇情 ---------- */
+function startGame(){ gameContainer.style.display='block'; renderScene('accept'); }
+
+const bgImage=document.getElementById('bgImage');
+const speechText=document.getElementById('speechText');
+const choicesContainer=document.getElementById('choicesContainer');
+const clickOverlay=document.getElementById('clickOverlay');
+
+function renderScene(id){
+  const scene=scenes[id]; if(!scene) return;
+  bgImage.src=`assets/${scene.bg}`;
+  speechText.innerText=scene.speech;
+  choicesContainer.innerHTML='';
+  if(scene.choices&&scene.choices.length){
+    clickOverlay.style.pointerEvents='none';
+    scene.choices.forEach(c=>{
+      const btn=document.createElement('button');
+      btn.className='choice-button';
+      btn.innerText=c.text;
+      btn.onclick=()=>renderScene(c.next);
+      choicesContainer.appendChild(btn);
+    });
+    hideHint();
+  }else if(scene.autoNext){
+    clickOverlay.style.pointerEvents='auto';
+    clickOverlay.onclick=()=>renderScene(scene.autoNext);
+    showHint();
+  }else{
+    clickOverlay.style.pointerEvents='none';
+    hideHint();
+  }
+}
+</script>
+</body>
+</html>
