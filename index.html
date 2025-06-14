@@ -253,32 +253,32 @@ const scenes={
         choices: []
       },
       d10: {
-        bg: '苦惱的我.png',
+        bg: '想離開.png',
         speech: '我向社工遞出了離宿申請。',
         autoNext: 'd11',
         choices: []
       },
       d11: {
-        bg: '苦惱的我.png',
+        bg: '整理行李.png',
         speech: '當一切手續辦妥，你帶著簡單的行李離開，踏上了未知的街頭。',
         choices: [
           { text: '受不了制度管束，決定離開', next: 'b1' },
         ]
       },
       b1: {
-        bg: '苦惱的我.png',
+        bg: 'sad.png',
         speech: '離開機構已經兩三個月，重新回到街頭的生活比之前更艱難。',
         autoNext: 'd12',
         choices: []
       },
       d12: {
-        bg: '苦惱的我.png',
+        bg: 'sad.png',
         speech: '夜晚寒冷刺骨，身體也因長期勞累而愈發疲憊。街頭的生活比記憶中更苦、更不堪。',
         autoNext: 'd13',
         choices: []
       },
       d13: {
-        bg: '苦惱的我.png',
+        bg: 'sad.png',
         speech: '我面對殘酷的街頭，終究拉了下臉，聯絡社工申請回到機構，再給自己一次機會。',
         choices: [
           { text: '回到機構，再試試看努力脫離街頭生活❗ 計一點', next: 'g5' },
@@ -725,7 +725,7 @@ const scenes={
         speech: '這樣的檢查，讓我感受到一絲壓迫與不舒服。',
         choices: [
           { text: '配合搜身', next: 'g12' },
-          { text: '即使會被記點，仍拒絕搜身', next: 'h12' }
+          { text: '拒絕搜身，❗計一點', next: 'h12' }
         ]
       },
       //結果（社工依規定請你配合搜身，檢查是否有攜帶違禁品）：翻包包.png  53\55
@@ -807,7 +807,7 @@ const scenes={
         speech: '這樣的檢查，讓我感受到一絲壓迫與不舒服。',
         choices: [
           { text: '配合搜身', next: 'g12' },
-          { text: '即使會被記點，仍拒絕搜身', next: 'h12' }
+          { text: '拒絕搜身❗ 計一點', next: 'h12' }
         ]
       },
       a9: {
@@ -832,7 +832,7 @@ const scenes={
         bg: '翻包2.png',
         speech: '你遲遲沒有回話，只是有些猶豫，你還要不要繼續待在這裡受這些制度約束？',
         choices: [
-          { text: '選擇留下，讓他們記點❗ 計一點', next: 'a10' },
+          { text: '選擇留下', next: 'a10' },
           { text: '你覺得這樣的生活不是你要的，決定離開，再次回到街頭', next: 'a11' }
         ]
       },
@@ -842,31 +842,31 @@ const scenes={
         choices: []
       },
       a11: {//回街頭結局
-        bg: '租屋.png',
+        bg: '想離開.png',
         speech: '那些規定與約束還是讓你喘不過氣，你再次向社工提出申請，說明自己想離開。',
         autoNext: 'a12',
         choices: []
       },
       a12: {//回街頭結局
-        bg: '租屋.png',
+        bg: '整理行李.png',
         speech: '這一次，社工沒有多說什麼，你整理好簡單的行李，離開了機構。',
         autoNext: 'a13',
         choices: []
       },
       a13: {//回街頭結局
-        bg: '租屋.png',
+        bg: 'sad.png',
         speech: '回到街頭後的日子依然困苦，天氣一樣寒冷，找工作還是困難重重，身體也時不時出狀況。',
         autoNext: 'a14',
         choices: []
       },
       a14: {//回街頭結局
-        bg: '租屋.png',
+        bg: 'sad.png',
         speech: '但這一次，少了規定的早晚點名、少了行為被監督的壓力，少了那些讓你覺得不自在的制度，你反而感到一點輕鬆。',
         autoNext: 'a15',
         choices: []
       },
       a15: {//回街頭結局
-        bg: '租屋.png',
+        bg: 'sad.png',
         speech: '回到你熟悉的街頭，繼續過自由自在的日子。',
         autoNext: 'a17',
         choices: []
