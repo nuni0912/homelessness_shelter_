@@ -7,69 +7,68 @@
 
   <style>
     /* ---------------- 全域 ---------------- */
-    *{box-sizing:border-box;margin:0;padding:0;}
-    html,body{width:100%;height:100%;overflow:hidden;font-family:sans-serif;}
+    * { box-sizing:border-box; margin:0; padding:0; }
+    html, body { width:100%; height:100%; overflow:hidden; font-family:sans-serif; }
 
     /* ---------------- 共用容器 ---------------- */
     #loadingScreen,
     #preContainer,
-    #gameContainer{
-      position:fixed;top:0;left:50%;transform:translateX(-50%);
-      width:375px;height:667px;
-      padding-top:var(--safe-top);padding-bottom:var(--safe-bot);
+    #gameContainer {
+      position:fixed; top:0; left:50%; transform:translateX(-50%);
+      width:375px; height:667px;
+      padding-top:var(--safe-top); padding-bottom:var(--safe-bot);
     }
-    :root{--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);}
+    :root { --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px); }
 
     /* ---------------- loading ---------------- */
-    #loadingScreen{
+    #loadingScreen {
       background:#000 url('assets/sad.png') center/cover no-repeat;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:100;
     }
-    #loadingBar{width:80%;height:10px;background:#444;border-radius:5px;overflow:hidden;margin-top:10px;}
-    #loadingProgress{width:0;height:100%;background:#fff;}
-    #loadingText{color:#fff;font-size:18px;}
+    #loadingBar { width:80%; height:10px; background:#444; border-radius:5px; overflow:hidden; margin-top:10px; }
+    #loadingProgress { width:0; height:100%; background:#fff; }
+    #loadingText { color:#fff; font-size:18px; }
 
     /* ---------------- preContainer ---------------- */
     #preContainer video,
-    #preContainer img:not(#laiReplyBtn):not(#agreementImg):not(#readBtn){
-      position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;
+    #preContainer img:not(#laiReplyBtn):not(#agreementImg):not(#readBtn) {
+      position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;
     }
-    #tapHint,#loadingText,#loadingBar,#choicesContainer{bottom:calc(var(--safe-bot)+20px);}
-    #preContainer #agreementImg{position:absolute;top:0;left:0;width:100%;height:auto;object-fit:contain;display:none;z-index:150;}
-    #preContainer #laiReplyBtn,#preContainer #readBtn{
-      position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
-      width:300px;cursor:pointer;display:none;z-index:200;
+    #tapHint, #loadingText, #loadingBar, #choicesContainer { bottom:calc(var(--safe-bot)+20px); }
+    #preContainer #agreementImg { position:absolute; top:0; left:0; width:100%; height:auto; object-fit:contain; display:none; z-index:150; }
+    #preContainer #laiReplyBtn, #preContainer #readBtn {
+      position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
+      width:300px; cursor:pointer; display:none; z-index:200;
     }
-    #tapHint{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:100%;
-      text-align:center;color:#fff;font-size:16px;z-index:120;display:none;}
+    #tapHint { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:100%; text-align:center; color:#fff; font-size:16px; z-index:120; display:none; }
 
     /* ---------------- gameContainer ---------------- */
-    #gameContainer{display:none;overflow:hidden;border:1px solid #ccc;box-shadow:0 0 12px rgba(0,0,0,.2);z-index:10;}
+    #gameContainer { display:none; overflow:hidden; border:1px solid #ccc; box-shadow:0 0 12px rgba(0,0,0,.2); z-index:10; }
 
     /* ---- 三顆愛心 ---- */
-    .heart{position:absolute;top:3px;width:100%;height:auto;z-index:2;}
-    #heartRight{right:1px;}
-    #heartMid{left:2px;}
-    #heartLeft{left:1px;}
+    .heart { position:absolute; top:3px; width:100%; height:auto; z-index:2; }
+    #heartRight { right:1px; }
+    #heartMid { left:2px; }
+    #heartLeft { left:1px; }
 
-    #bgImage{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1;}
-    #speechText{
-      position:absolute;bottom:150px;left:50%;transform:translateX(-50%);
-      width:90%;max-width:320px;padding:12px 16px;background:rgba(255,255,255,.8);
-      font-size:16px;border-radius:12px;line-height:1.5;z-index:3;text-align:left;
+    #bgImage { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:1; }
+    #speechText {
+      position:absolute; bottom:150px; left:50%; transform:translateX(-50%);
+      width:90%; max-width:320px; padding:12px 16px; background:rgba(255,255,255,.8);
+      font-size:16px; border-radius:12px; line-height:1.5; z-index:3; text-align:left;
     }
-    #choicesContainer{
-      position:absolute;bottom:15px;left:50%;transform:translateX(-50%);
-      width:90%;display:flex;flex-direction:column;align-items:center;z-index:4;
+    #choicesContainer {
+      position:absolute; bottom:15px; left:50%; transform:translateX(-50%);
+      width:90%; display:flex; flex-direction:column; align-items:center; z-index:4;
     }
-    .choice-button{width:100%;padding:12px 16px;margin:8px 0;border:2px solid #000;border-radius:15px;background:#fff;font-size:15px;cursor:pointer;}
-    .choice-button:hover{background:#f0f0f0;}
-    #clickOverlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;}
-    #overlayContainer img,#overlayContainer video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
+    .choice-button { width:100%; padding:12px 16px; margin:8px 0; border:2px solid #000; border-radius:15px; background:#fff; font-size:15px; cursor:pointer; }
+    .choice-button:hover { background:#f0f0f0; }
+    #clickOverlay { position:absolute; top:0; left:0; width:100%; height:100%; z-index:2; }
+    #overlayContainer img, #overlayContainer video { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; }
 
-    @media (max-width:480px){
-      #loadingScreen,#preContainer,#gameContainer{
-        left:0;transform:none;width:100vw;height:100dvh;border:none;box-shadow:none;
+    @media (max-width:480px) {
+      #loadingScreen, #preContainer, #gameContainer {
+        left:0; transform:none; width:100vw; height:100dvh; border:none; box-shadow:none;
       }
     }
   </style>
@@ -85,18 +84,17 @@
   <div id="preContainer" style="display:none;">
     <video id="introVideo" src="assets/簡短開場白影片.mp4" muted playsinline></video>
     <div id="tapHint">點擊螢幕繼續</div>
-    <img id="laiBackground" src="assets/賴背景.png" style="display:none;z-index:1;">
+    <img id="laiBackground" src="assets/賴背景.png" style="display:none; z-index:1;">
     <div id="overlayContainer"></div>
     <img id="laiReplyBtn" src="assets/賴回覆按鈕.png">
     <img id="agreementImg" src="assets/生活公約03.png">
-    <img id="readBtn"  src="assets/我已閱讀按鈕.png">
+    <img id="readBtn" src="assets/我已閱讀按鈕.png">
   </div>
 
   <!-- 主劇情 -->
   <div id="gameContainer">
-    <!-- 三顆愛心 -->
-    <img id="heartLeft"  class="heart" src="assets/左愛心.png">
-    <img id="heartMid"   class="heart" src="assets/中愛心.png">
+    <img id="heartLeft" class="heart" src="assets/左愛心.png">
+    <img id="heartMid" class="heart" src="assets/中愛心.png">
     <img id="heartRight" class="heart" src="assets/右愛心.png">
 
     <img id="bgImage" src="">
@@ -106,8 +104,9 @@
   </div>
 
 <script>
-/* ---------- 劇情資料 ---------- */
-const scenes={
+/* ---------- 劇情資料區 ---------- */
+// 使用者自行貼上 scenes 物件
+const scenes = { 
   accept: {
         bg: 'day3.png',
         speech: '第一次踏進安置機構，印入我眼簾的這棟雙層樓的老屋，鐵皮屋頂鏽蝕、牆面斑駁，但中庭寬闊，四周圍繞著寢室。',
@@ -253,7 +252,7 @@ const scenes={
         choices: []
       },
       d10: {
-        bg: '想離開.png',
+        bg: '苦惱的我.png',
         speech: '我向社工遞出了離宿申請。',
         autoNext: 'd11',
         choices: []
@@ -871,98 +870,289 @@ const scenes={
         autoNext: 'a17',
         choices: []
       },
-
 };
-/* ---------- 其他素材 ---------- */
-const lauDialogs=['賴對話1.png','賴對話2.png','賴對話3.png','賴對話4.png'];
-const interDialogs=['賴對話穿插1.png','賴對話穿插2.png'];
-const ruleImgs=['計點規則new1.png','計點規則new2.png','計點規則new3.png','計點規則new4.png','計點規則new5.png','計點規則new6.png'];
-const videoAssets=['簡短開場白影片.mp4','Line對話影片03.mp4'];
-const miscImgs=['開場白穿插對話.png'];
 
-/* ---------- 靜態圖片（含愛心與警告頁） ---------- */
-const staticImgs=[
+/* ---------- 專用素材 ---------- */
+const lauDialogs = ['賴對話1.png','賴對話2.png','賴對話3.png','賴對話4.png'];
+const interDialogs = ['賴對話穿插1.png','賴對話穿插2.png'];
+const ruleImgs = ['計點規則new1.png','計點規則new2.png','計點規則new3.png','計點規則new4.png','計點規則new5.png','計點規則new6.png'];
+const videoAssets = ['簡短開場白影片.mp4','Line對話影片03.mp4'];
+const miscImgs = ['開場白穿插對話.png'];
+
+// 流浪結局序列
+const wanderEndings = ['流浪結局1.png','流浪結局2.png','流浪結局3.png','流浪結局4.png','流浪結局5.png','流浪結局6.png'];
+
+/* ---------- 靜態資源 ---------- */
+const staticImgs = [
   'sad.png','賴背景.png','賴回覆按鈕.png','生活公約03.png','我已閱讀按鈕.png',
-  ,'右愛心.png','中愛心.png','左愛心.png','警告頁.png'
+  '右愛心.png','中愛心.png','左愛心.png','警告頁.png','資訊頁.png'
 ];
 
-/* ---------- 載入進度 ---------- */
-const totalAssets=Object.keys(scenes).length+lauDialogs.length+interDialogs.length+ruleImgs.length+videoAssets.length+miscImgs.length+staticImgs.length;
-let loadedAssets=0;
-function updateLoading(){loadedAssets++;const pct=Math.round(loadedAssets/totalAssets*100);loadingText.innerText=pct+'%';loadingProgress.style.width=pct+'%';if(loadedAssets>=totalAssets)setTimeout(startPre,300);}
-[...staticImgs,...lauDialogs,...interDialogs,...ruleImgs,...miscImgs].forEach(f=>{const img=new Image();img.src=`assets/${f}`;img.onload=updateLoading;img.onerror=updateLoading;});
-Object.values(scenes).forEach(s=>{const img=new Image();img.src=`assets/${s.bg}`;img.onload=updateLoading;img.onerror=updateLoading;});
-videoAssets.forEach(f=>{const v=document.createElement('video');v.src=`assets/${f}`;v.preload='metadata';v.muted=true;v.playsInline=true;v.onloadedmetadata=updateLoading;v.onerror=updateLoading;});
-
-/* ---------- DOM 變數 ---------- */
-const tapHint=document.getElementById('tapHint'),showHint=()=>tapHint.style.display='block',hideHint=()=>tapHint.style.display='none';
-const loadingScreen=document.getElementById('loadingScreen');
-const preContainer=document.getElementById('preContainer');
-const introVideo=document.getElementById('introVideo');
-const laiBg=document.getElementById('laiBackground');
-const overlayContainer=document.getElementById('overlayContainer');
-const laiReplyBtn=document.getElementById('laiReplyBtn');
-const agreementImg=document.getElementById('agreementImg');
-const readBtn=document.getElementById('readBtn');
-const gameContainer=document.getElementById('gameContainer');
-const heartImgs=[document.getElementById('heartLeft'),document.getElementById('heartMid'),document.getElementById('heartRight')];
-
-/* ---------- 狀態 ---------- */
-let stage=0,lauIndex=0,ruleIndex=0,introDone=false,lineDone=false,lineVideo=null,introPicShown=false;
-let heartCount=3;
-
-/* ---------- 愛心邏輯 ---------- */
-function initHearts(){heartImgs.forEach(h=>h.style.display='block');heartCount=3;}
-function triggerPenalty(){
-  if(heartCount<=0)return;
-  heartCount--;heartImgs[heartCount].style.display='none';
-  const warn=document.createElement('img');
-  Object.assign(warn.style,{position:'absolute',top:0,left:0,width:'100%',height:'100%',objectFit:'cover',zIndex:200,cursor:'pointer'});
-  warn.src='assets/警告頁.png';gameContainer.appendChild(warn);warn.onclick=()=>warn.remove();
+/* ---------- 載入流程 ---------- */
+let loadedAssets = 0;
+const totalAssets = Object.values(scenes).length + lauDialogs.length + interDialogs.length + ruleImgs.length + videoAssets.length + miscImgs.length + staticImgs.length;
+function updateLoading() {
+  loadedAssets++;
+  const pct = Math.round(loadedAssets / totalAssets * 100);
+  loadingText.innerText = pct + '%';
+  loadingProgress.style.width = pct + '%';
+  if (loadedAssets >= totalAssets) setTimeout(startPre, 300);
 }
 
-/* ---------- 前置流程（影片與點擊邏輯保持原碼） ---------- */
-function startPre(){loadingScreen.style.display='none';preContainer.style.display='block';playIntro();}
-function playIntro(){stage=0;introDone=false;introVideo.style.display='block';introVideo.play();showHint();introVideo.onended=()=>{if(!introDone)endIntro();};}
-function skipIntro(){if(!introDone){introDone=true;introVideo.pause();endIntro();}}
-function endIntro(){introVideo.style.display='none';laiBg.style.display='none';overlayContainer.innerHTML='';const img=document.createElement('img');img.src='assets/開場白穿插對話.png';img.style.zIndex=2;overlayContainer.appendChild(img);introPicShown=true;stage=1;showHint();}
-preContainer.onclick=function(e){
-  if(e.target===laiReplyBtn||e.target===readBtn)return;
-  if(stage===0){skipIntro();return;}
-  if(stage===5){skipLine();return;}
-  if(stage===1&&introPicShown){overlayContainer.innerHTML='';laiBg.style.display='block';introPicShown=false;showHint();return;}
-  if(stage===1){if(lauIndex<lauDialogs.length){const img=document.createElement('img');img.src=`assets/${lauDialogs[lauIndex++]}`;img.style.zIndex=2;overlayContainer.appendChild(img);if(lauIndex===lauDialogs.length){laiReplyBtn.style.display='block';hideHint();stage=2;}}return;}
-  if(stage===3){overlayContainer.innerHTML='';const img=document.createElement('img');img.src=`assets/${interDialogs[1]}`;img.style.zIndex=2;overlayContainer.appendChild(img);stage=4;showHint();return;}
-  if(stage===4){overlayContainer.innerHTML='';laiBg.style.display='none';playLineVideo();return;}
-  if(stage===6){
-    if(ruleIndex<ruleImgs.length){preContainer.querySelectorAll('.rule-img').forEach(i=>i.remove());const img=document.createElement('img');img.src=`assets/${ruleImgs[ruleIndex++]}`;img.className='rule-img';img.style.zIndex=2;preContainer.appendChild(img);if(ruleIndex===ruleImgs.length)hideHint();}
-    if(ruleIndex===ruleImgs.length){preContainer.querySelectorAll('.rule-img').forEach(i=>i.remove());preContainer.style.display='none';startGame();}
+[...staticImgs, ...lauDialogs, ...interDialogs, ...ruleImgs, ...miscImgs].forEach(f => {
+  const img = new Image(); img.src = `assets/${f}`; img.onload = img.onerror = updateLoading;
+});
+Object.values(scenes).forEach(s => {
+  const img = new Image(); img.src = `assets/${s.bg}`; img.onload = img.onerror = updateLoading;
+});
+videoAssets.forEach(f => {
+  const v = document.createElement('video'); v.src = `assets/${f}`; v.preload = 'metadata'; v.muted = true; v.playsInline = true;
+  v.onloadedmetadata = updateLoading; v.onerror = updateLoading;
+});
+
+/* ---------- DOM 參考 ---------- */
+const loadingScreen = document.getElementById('loadingScreen');
+const loadingText = document.getElementById('loadingText');
+const loadingProgress = document.getElementById('loadingProgress');
+const preContainer = document.getElementById('preContainer');
+const introVideo = document.getElementById('introVideo');
+const tapHint = document.getElementById('tapHint');
+const laiBackground = document.getElementById('laiBackground');
+const overlayContainer = document.getElementById('overlayContainer');
+const laiReplyBtn = document.getElementById('laiReplyBtn');
+const agreementImg = document.getElementById('agreementImg');
+const readBtn = document.getElementById('readBtn');
+const gameContainer = document.getElementById('gameContainer');
+const heartImgs = [
+  document.getElementById('heartLeft'),
+  document.getElementById('heartMid'),
+  document.getElementById('heartRight')
+];
+const bgImage = document.getElementById('bgImage');
+const speechText = document.getElementById('speechText');
+const choicesContainer = document.getElementById('choicesContainer');
+const clickOverlay = document.getElementById('clickOverlay');
+
+/* ---------- 狀態 ---------- */
+let stage = 0;
+let lauIndex = 0;
+let ruleIndex = 0;
+let introDone = false;
+let lineDone = false;
+let lineVideo = null;
+let introPicShown = false;
+let heartCount = 3;
+
+/* ---------- 愛心邏輯 ---------- */
+function initHearts() {
+  heartImgs.forEach(h => h.style.display = 'block');
+  heartCount = 3;
+}
+
+function triggerPenalty() {
+  if (heartCount <= 0) return;
+  heartCount--;
+  heartImgs[heartCount].style.display = 'none';
+
+  const warn = document.createElement('img');
+  Object.assign(warn.style, {
+    position: 'absolute', top: 0, left: 0,
+    width: '100%', height: '100%', objectFit: 'cover',
+    zIndex: 200, cursor: 'pointer'
+  });
+  warn.src = 'assets/警告頁.png';
+  gameContainer.appendChild(warn);
+
+  if (heartCount > 0) {
+    warn.onclick = () => warn.remove();
+  } else {
+    // 第三點後，啟動流浪結局播放
+    let endingIndex = 0;
+    warn.onclick = () => {
+      if (endingIndex < wanderEndings.length) {
+        warn.src = `assets/${wanderEndings[endingIndex++]}`;
+      } else {
+        warn.src = 'assets/資訊頁.png';
+        warn.onclick = null;
+      }
+    };
+  }
+}
+
+/* ---------- 前置流程 ---------- */
+function startPre() {
+  loadingScreen.style.display = 'none';
+  preContainer.style.display = 'block';
+  playIntro();
+}
+
+function playIntro() {
+  stage = 0;
+  introDone = false;
+  introVideo.style.display = 'block';
+  introVideo.play();
+  tapHint.style.display = 'block';
+  introVideo.onended = () => { if (!introDone) endIntro(); };
+}
+
+function skipIntro() {
+  if (!introDone) {
+    introDone = true;
+    introVideo.pause();
+    endIntro();
+  }
+}
+
+function endIntro() {
+  introVideo.style.display = 'none';
+  overlayContainer.innerHTML = '';
+  const pic = document.createElement('img');
+  pic.src = 'assets/開場白穿插對話.png';
+  pic.style.zIndex = 2;
+  overlayContainer.appendChild(pic);
+  introPicShown = true;
+  stage = 1;
+}
+
+preContainer.onclick = function(e) {
+  if (stage === 0) { skipIntro(); return; }
+  if (stage === 5) { skipLine(); return; }
+  if (stage === 1 && introPicShown) {
+    overlayContainer.innerHTML = '';
+    laiBackground.style.display = 'block';
+    introPicShown = false;
+    return;
+  }
+  if (stage === 1) {
+    if (lauIndex < lauDialogs.length) {
+      const dlg = document.createElement('img');
+      dlg.src = `assets/${lauDialogs[lauIndex++]}`;
+      dlg.style.zIndex = 2;
+      overlayContainer.appendChild(dlg);
+      if (lauIndex === lauDialogs.length) {
+        laiReplyBtn.style.display = 'block';
+        tapHint.style.display = 'none';
+        stage = 2;
+      }
+    }
+    return;
+  }
+  if (stage === 3) {
+    overlayContainer.innerHTML = '';
+    const dlg2 = document.createElement('img');
+    dlg2.src = `assets/${interDialogs[1]}`;
+    dlg2.style.zIndex = 2;
+    overlayContainer.appendChild(dlg2);
+    stage = 4;
+    return;
+  }
+  if (stage === 4) {
+    overlayContainer.innerHTML = '';
+    laiBackground.style.display = 'none';
+    playLineVideo();
+    return;
+  }
+
+  if (stage === 6) {
+    if (ruleIndex < ruleImgs.length) {
+      document.querySelectorAll('.rule-img').forEach(i => i.remove());
+      const r = document.createElement('img');
+      r.src = `assets/${ruleImgs[ruleIndex++]}`;
+      r.className = 'rule-img';
+      r.style.zIndex = 2;
+      preContainer.appendChild(r);
+      if (ruleIndex === ruleImgs.length) tapHint.style.display = 'none';
+    } else {
+      document.querySelectorAll('.rule-img').forEach(i => i.remove());
+      preContainer.style.display = 'none';
+      startGame();
+    }
   }
 };
-laiReplyBtn.onclick=function(e){e.stopPropagation();laiReplyBtn.style.display='none';const img=document.createElement('img');img.src=`assets/${interDialogs[0]}`;img.style.zIndex=2;overlayContainer.appendChild(img);stage=3;showHint();};
-function playLineVideo(){stage=5;lineDone=false;lineVideo=document.createElement('video');lineVideo.src='assets/Line對話影片03.mp4';lineVideo.autoplay=true;lineVideo.muted=true;lineVideo.playsInline=true;Object.assign(lineVideo.style,{position:'absolute',top:0,left:0,width:'100%',height:'100%'});preContainer.appendChild(lineVideo);showHint();lineVideo.onended=()=>{if(!lineDone)endLine();};}
-function skipLine(){if(!lineDone){lineDone=true;lineVideo.pause();endLine();}}
-function endLine(){lineVideo.remove();hideHint();agreementImg.style.display='block';readBtn.style.display='block';stage=7;}
-readBtn.onclick=function(e){e.stopPropagation();agreementImg.style.display='none';readBtn.style.display='none';ruleIndex=0;stage=6;const img=document.createElement('img');img.src=`assets/${ruleImgs[ruleIndex++]}`;img.className='rule-img';img.style.zIndex=2;preContainer.appendChild(img);showHint();};
 
-/* ---------- 主劇情 ---------- */
-function startGame(){initHearts();gameContainer.style.display='block';renderScene('accept');}
-const bgImage=document.getElementById('bgImage'),speechText=document.getElementById('speechText'),choicesContainer=document.getElementById('choicesContainer'),clickOverlay=document.getElementById('clickOverlay');
-function renderScene(id){
-  const scene=scenes[id];if(!scene)return;
-  bgImage.src=`assets/${scene.bg}`;speechText.innerText=scene.speech;choicesContainer.innerHTML='';
-  if(scene.choices&&scene.choices.length){
-    clickOverlay.style.pointerEvents='none';
-    scene.choices.forEach(c=>{
-      const btn=document.createElement('button');btn.className='choice-button';btn.innerText=c.text;
-      btn.onclick=()=>{if(c.text.includes('計一點'))triggerPenalty();renderScene(c.next);};
+laiReplyBtn.onclick = function(e) {
+  e.stopPropagation();
+  laiReplyBtn.style.display = 'none';
+  const dlg0 = document.createElement('img');
+  dlg0.src = `assets/${interDialogs[0]}`;
+  dlg0.style.zIndex = 2;
+  overlayContainer.appendChild(dlg0);
+  stage = 3;
+};
+
+function playLineVideo() {
+  stage = 5;
+  lineDone = false;
+  lineVideo = document.createElement('video');
+  lineVideo.src = 'assets/Line對話影片03.mp4';
+  lineVideo.autoplay = true;
+  lineVideo.muted = true;
+  lineVideo.playsInline = true;
+  Object.assign(lineVideo.style, { position:'absolute', top:0, left:0, width:'100%', height:'100%' });
+  preContainer.appendChild(lineVideo);
+  tapHint.style.display = 'block';
+  lineVideo.onended = () => { if (!lineDone) endLine(); };
+}
+
+function skipLine() {
+  if (!lineDone) {
+    lineDone = true;
+    lineVideo.pause();
+    endLine();
+  }
+}
+
+function endLine() {
+  lineVideo.remove();
+  agreementImg.style.display = 'block';
+  readBtn.style.display = 'block';
+  stage = 7;
+}
+
+readBtn.onclick = function(e) {
+  e.stopPropagation();
+  agreementImg.style.display = 'none';
+  readBtn.style.display = 'none';
+  ruleIndex = 0;
+  stage = 6;
+  const r0 = document.createElement('img');
+  r0.src = `assets/${ruleImgs[ruleIndex++]}`;
+  r0.className = 'rule-img';
+  r0.style.zIndex = 2;
+  preContainer.appendChild(r0);
+  tapHint.style.display = 'block';
+};
+
+/* ---------- 主劇情開始 ---------- */
+function startGame() {
+  initHearts();
+  gameContainer.style.display = 'block';
+  renderScene('accept');
+}
+
+function renderScene(id) {
+  const scene = scenes[id];
+  if (!scene) return;
+  bgImage.src = `assets/${scene.bg}`;
+  speechText.innerText = scene.speech;
+  choicesContainer.innerHTML = '';
+
+  if (scene.choices && scene.choices.length) {
+    clickOverlay.style.pointerEvents = 'none';
+    scene.choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-button';
+      btn.innerText = c.text;
+      btn.onclick = () => {
+        if (c.text.includes('計一點')) triggerPenalty();
+        renderScene(c.next);
+      };
       choicesContainer.appendChild(btn);
-    });hideHint();
-  }else if(scene.autoNext){
-    clickOverlay.style.pointerEvents='auto';
-    clickOverlay.onclick=()=>renderScene(scene.autoNext);
-    showHint();
-  }else{clickOverlay.style.pointerEvents='none';hideHint();}
+    });
+  } else if (scene.autoNext) {
+    clickOverlay.style.pointerEvents = 'auto';
+    clickOverlay.onclick = () => renderScene(scene.autoNext);
+  }
 }
 </script>
 </body>
