@@ -780,7 +780,7 @@ const scenes = {
       a23: {//綠色結局
         bg: '租屋.png',
         speech: '自己終於離開了那段過渡時期，重新走回屬於自己的生活。',
-        autoNext: 'a24',
+        autoNext: '',
         choices: []
       },
       a8: {//剛超過門禁，翻包
@@ -867,7 +867,7 @@ const scenes = {
       a15: {//回街頭結局
         bg: 'sad.png',
         speech: '回到你熟悉的街頭，繼續過自由自在的日子。',
-        autoNext: 'a17',
+        autoNext: '',
         choices: []
       },
 };
@@ -885,7 +885,7 @@ const wanderEndings = ['流浪結局1.png','流浪結局2.png','流浪結局3.pn
 /* ---------- 靜態資源 ---------- */
 const staticImgs = [
   'sad.png','賴背景.png','賴回覆按鈕.png','生活公約03.png','我已閱讀按鈕.png',
-  '右愛心.png','中愛心.png','左愛心.png','警告頁.png','資訊頁.png'
+  '右愛心.png','中愛心.png','左愛心.png','警告頁.png','資訊頁new.png'
 ];
 
 /* ---------- 載入流程 ---------- */
@@ -972,7 +972,7 @@ function triggerPenalty() {
       if (endingIndex < wanderEndings.length) {
         warn.src = `assets/${wanderEndings[endingIndex++]}`;
       } else {
-        warn.src = 'assets/資訊頁.png';
+        warn.src = 'assets/資訊頁new.png';
         warn.onclick = null;
       }
     };
@@ -1152,6 +1152,16 @@ function renderScene(id) {
   } else if (scene.autoNext) {
     clickOverlay.style.pointerEvents = 'auto';
     clickOverlay.onclick = () => renderScene(scene.autoNext);
+  } else {
+    // 🎉 新增：當劇情無 options 亦無 autoNext，顯示資訊頁
+    clickOverlay.style.pointerEvents = 'none';
+    const info = document.createElement('img');
+    info.src = 'assets/資訊頁.png';
+    Object.assign(info.style, {
+      position:'absolute', top:0, left:0,
+      width:'100%', height:'100%', objectFit:'cover', zIndex:200
+    });
+    gameContainer.appendChild(info);
   }
 }
 </script>
