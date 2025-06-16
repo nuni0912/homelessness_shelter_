@@ -64,16 +64,38 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:sans-serif;}
   position:absolute;top:10px;right:12px;font-size:28px;color:#fff;font-weight:bold;cursor:pointer;z-index:260;
 }
 #scrollOverlay .scroll-content{
-  position:absolute;top:60px;left:0;width:100%;height:calc(100% - 60px);
-  overflow-y:auto;padding:20px;font-size:16px;line-height:1.6;color:#000;box-sizing:border-box;
+  position:absolute;
+  inset:10%;                 /* ← 四邊都留 10% 的距離 */
+  overflow-y:auto;
+
+  padding:20px;
+  font-size:16px;
+  line-height:1.6;
+  color:#000;
+  background:rgba(255,255,255,.92);
+  box-sizing:border-box;
   scrollbar-width:thin;
+  border-radius:12px;
+  z-index:260;
 }
+
+
 
 /* ---------------- RWD ---------------- */
 @media (max-width:480px){
   #loadingScreen,#preContainer,#gameContainer{
     left:0;transform:none;width:100vw;height:100dvh;border:none;box-shadow:none;
   }
+}
+#scrollOverlay .scroll-content ul{
+  padding-left:1.8em;   /* ≒縮進兩個中文字的寬度，可自行調整 */
+  margin:0 0 1em;       /* 清單跟下一段文字之間留 1em 空距 */
+}
+
+/* 每一項再細調一下，使多行文字左邊對齊 */
+#scrollOverlay .scroll-content li{
+  text-indent:-.6em;    /* 把第一行往回拉，讓項目符號佔的位置被吃掉 */
+  margin:0.25em 0;      /* 同時讓清單項目彼此有一點上下距離 */
 }
 </style>
 </head>
@@ -1071,16 +1093,84 @@ function showInfoPage(){
 
 /* ---------- 捲動式文章頁 ---------- */
 function showScrollable(type){
-  const overlay=document.createElement('div');overlay.id='scrollOverlay';gameContainer.appendChild(overlay);
+  const overlay = document.createElement('div');
+  overlay.id = 'scrollOverlay';
+  gameContainer.appendChild(overlay);
 
-  const bg=new Image();bg.src=`assets/${type==='other'?'其他結局背景.png':'政府政策背景.png'}`;
-  Object.assign(bg.style,{position:'absolute',top:0,left:0,width:'100%',height:'100%',objectFit:'cover',zIndex:251});overlay.appendChild(bg);
+  /* 背景圖 */
+  const bg = new Image();
+  bg.src = `assets/${type === 'other' ? '其他結局背景.png' : '政府政策背景.png'}`;
+  Object.assign(bg.style, {
+    position:'absolute',top:0,left:0,width:'100%',height:'100%',
+    objectFit:'cover',zIndex:251
+  });
+  overlay.appendChild(bg);
 
-  const close=document.createElement('div');close.className='close-btn';close.textContent='✕';
-  close.onclick=()=>{overlay.remove();document.getElementById('infoOverlay').style.display='block';};overlay.appendChild(close);
+  /* 關閉鈕 */
+  const close = document.createElement('div');
+  close.className = 'close-btn';
+  close.textContent = '✕';
+  close.onclick = () => {
+    overlay.remove();
+    document.getElementById('infoOverlay').style.display = 'block';
+  };
+  overlay.appendChild(close);
 
-  const content=document.createElement('div');content.className='scroll-content';
-  content.innerHTML='<p>（這裡放 <strong>'+ (type==='other'?'其他結局':'政府政策') +' 文章內容</strong>，稍後再補）</p>';
+  /* 文字容器 —— 先宣告！ */
+  const content = document.createElement('div');
+  content.className = 'scroll-content';
+  overlay.appendChild(content);   // ← 先掛進去，z-index 260
+
+  /* 填入對應內容 */
+  if (type === 'other'){
+    content.innerHTML = `
+      <h2>四種結局與數據</h2><br>
+
+      <p><strong>在這場街友安置體驗中，你可能經歷了以下幾種結局：</strong></p>
+      <ul>
+        <li>成功恢復自立生活、脫離街頭</li>
+        <li>因違反規定被迫離開機構</li>
+        <li>自行選擇離開安置機構</li>
+        <li>轉介至長照或其他照護機構</li>
+      </ul>
+
+      <p>這些結局並非虛構，而是根據真實安置機構的統計資料所整理。</p><br>
+
+      <p><strong>以新北市「圓通居」113 年的統計為例，實際的離開原因分布如下：</strong></p>
+      <ul>
+        <li>成功轉銜（如長期安置、轉介長照）：約 18％</li>
+        <li>就業或租屋自立：約 2％</li>
+        <li>違規離所：約 24％</li>
+        <li>自行離開（含主動與未告知離開）：合計約 39％</li>
+      </ul>
+
+      <p>此外，還有少數是因家庭接回或在機構中過世。原因各異，但可以確定的是，進到安置機構，並不代表就此能順利脫離街頭。</p><br>
+
+      <p>就像你剛剛在遊戲裡經歷的，每個選擇背後，都藏著現實生活中的重重掙扎與難題。對你而言，這也許只是螢幕前的猶豫；但對許多人來說，這卻是真實人生中面臨的艱難抉擇與未定命運。</p>
+    `;
+  }else{
+    content.innerHTML =  `
+      <h2>安置不只有一種方式：<br>政府正嘗試更多元的安置模式：</h2><br>
+
+      <p>對許多街友來說，傳統機構生活規範太多，不容易適應。為了協助更多人穩定脫離街頭，政府近年開始嘗試多元型態的安置方式，讓街友能有更彈性的選擇。</p><br>
+
+      <p><strong>現行嘗試推動的多元安置方式包含：</strong></p><br>
+      <ul>
+        <li><strong>社會住宅式安置：</strong><br>
+            新北市設立小型社區安置點，讓已有一定工作能力的街友入住。社工每週僅訪視一至兩次，生活干預較少，更貼近一般住宅型態。</li>
+
+        <li><strong>社區支持據點：</strong><br>
+            除了住宿，街友也需要資訊和人脈連結，協助他們重建自立生活。街友倡議團體如「人生百味」提倡在社區內設點，讓街友能互相交流、獲得社福資訊，知道去哪裡求助。</li>
+      </ul>
+
+      <p>新北市社會局社會救助科代理科長郭宏昇坦言，這些多元安置形式在台灣的落實雖有進展，但仍面臨缺乏社會支持、建物難以取得等難關。</p><br>
+
+      <p>例如社會住宅式安置服務，目前可容納的人數有限，入住條件也相對嚴格，需要具備基本自立能力。此外，設點常會遭遇社區居民反對，導致推行受阻。</p><br>
+
+      <p>儘管如此，這已顯示政府與社會正試圖跳脫單一安置框架，從「先居住，再服務」的理念出發，讓不同處境的街友也能找到適合的重啟方式。未來，安置的路不只一條，也許就能讓更多人重新站穩腳步。</p>
+    `;
+  }
+
   overlay.appendChild(content);
 }
 
