@@ -912,7 +912,7 @@ const staticImgs=[
 
 /* ---------- 載入流程 ---------- */
 let loadedAssets=0;
-const totalAssets=staticImgs.length+lauDialogs.length+interDialogs.length+ruleImgs.length+videoAssets.length+miscImgs.length+Object.keys(typeof scenes==='object'?scenes:[]).length;
+const totalAssets=staticImgs.length+lauDialogs.length+interDialogs.length+ruleImgs.length+videoAssets.length+miscImgs.length+ wanderEndings.length +  Object.keys(typeof scenes==='object'?scenes:[]).length;
 function updateLoading(){
   loadedAssets++;
   const pct=Math.round(loadedAssets/totalAssets*100);
@@ -920,9 +920,13 @@ function updateLoading(){
   loadingProgress.style.width=pct+'%';
   if(loadedAssets>=totalAssets) setTimeout(startPre,300);
 }
-[...staticImgs,...lauDialogs,...interDialogs,...ruleImgs,...miscImgs].forEach(f=>{
-  const img=new Image();img.src=`assets/${f}`;img.onload=img.onerror=updateLoading;
+[...staticImgs, ...lauDialogs, ...interDialogs,
+ ...ruleImgs, ...miscImgs, ...wanderEndings].forEach(f=>{
+  const img = new Image();
+  img.src = `assets/${f}`;
+  img.onload = img.onerror = updateLoading;
 });
+
 if(typeof scenes==='object'){
   Object.values(scenes).forEach(s=>{
     const img=new Image();img.src=`assets/${s.bg}`;img.onload=img.onerror=updateLoading;
@@ -957,22 +961,38 @@ let stage=0,lauIndex=0,ruleIndex=0,introDone=false,lineDone=false,lineVideo=null
 
 /* ---------- 愛心邏輯 ---------- */
 function initHearts(){heartImgs.forEach(h=>h.style.display='block');heartCount=3;}
+
 function triggerPenalty(){
   if(heartCount<=0) return;
-  heartCount--;heartImgs[heartCount].style.display='none';
+  heartCount--;
+  heartImgs[heartCount].style.display='none';
+
   const warn=document.createElement('img');
-  Object.assign(warn.style,{position:'absolute',top:0,left:0,width:'100%',height:'100%',objectFit:'cover',zIndex:200,cursor:'pointer'});
+  Object.assign(warn.style,{
+    position:'absolute',top:0,left:0,width:'100%',height:'100%',
+    objectFit:'cover',zIndex:200,cursor:'pointer'
+  });
   warn.src='assets/警告頁.png';
   gameContainer.appendChild(warn);
-  if(heartCount>0){warn.onclick=()=>warn.remove();}
-  else{
-    let idx=0;
+
+  if(heartCount>0){
+    /* 還有愛心：只需警告一次即可關閉 */
+    warn.onclick=()=>warn.remove();
+  }else{
+    /* 愛心歸零：警告→6張流浪結局→資訊頁 */
+    let idx=-1;                       // -1 = 警告頁，0-5 = 流浪結局
     warn.onclick=()=>{
-      if(idx<wanderEndings.length){warn.src=`assets/${wanderEndings[idx++]}`;}
-      else{warn.src='assets/資訊頁new.png';warn.onclick=null;}
+      if(idx< wanderEndings.length-1){
+        idx++;
+        warn.src=`assets/${wanderEndings[idx]}`; // 顯示第 1~6 張流浪結局
+      }else{
+        warn.remove();                // 全部看完，移除層
+        showInfoPage();               // 進正式資訊頁（含兩按鈕）
+      }
     };
   }
 }
+
 
 /* ---------- loading → pre → intro ---------- */
 function startPre(){loadingScreen.style.display='none';preContainer.style.display='block';playIntro();}
