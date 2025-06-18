@@ -916,34 +916,39 @@ const staticImgs=[
 const audioAssets=['BGM.mp3','按鈕音效.mp3'];
 
 /* ---------- 載入流程 ---------- */
-let loadedAssets=0;
-const totalAssets =
-  staticImgs.length+lauDialogs.length+interDialogs.length+ruleImgs.length+
-  videoAssets.length+miscImgs.length+wanderEndings.length+
-  audioAssets.length+
-  Object.keys(typeof scenes==='object'?scenes:[]).length;
+/* ---------- 載入流程 ---------- */
+let loadedAssets = 0;
 
-function updateLoading(){
+// 只把「圖片」算進讀條
+const preloadTargets = [
+  ...staticImgs, ...lauDialogs, ...interDialogs,
+  ...ruleImgs, ...miscImgs, ...wanderEndings
+];
+
+const totalAssets = preloadTargets.length +
+                    Object.keys(scenes).length;   // 每個場景的背景圖
+
+function updateLoading () {
   loadedAssets++;
-  const pct = Math.round(loadedAssets/totalAssets*100);
-  loadingText.innerText = pct+'%';
-  loadingProgress.style.width = pct+'%';
-  if(loadedAssets>=totalAssets) setTimeout(startPre,300);
+  const pct = Math.round(loadedAssets / totalAssets * 100);
+  loadingText.innerText = pct + '%';
+  loadingProgress.style.width = pct + '%';
+  if (loadedAssets >= totalAssets) setTimeout(startPre, 300);
 }
 
-/* 逐一預載圖片 / 影片 / 音訊 ------------------------------------ */
-[...staticImgs,...lauDialogs,...interDialogs,...ruleImgs,...miscImgs,...wanderEndings]
-  .forEach(f=>{
-    const img=new Image();img.src=`assets/${f}`;
-    img.onload=img.onerror=updateLoading;
-  });
+// ---------- 圖片預載 ----------
+preloadTargets.forEach(f => {
+  const img = new Image();
+  img.src = `assets/${f}`;
+  img.onload = img.onerror = updateLoading;
+});
 
-if(typeof scenes==='object'){
-  Object.values(scenes).forEach(s=>{
-    const img=new Image();img.src=`assets/${s.bg}`;
-    img.onload=img.onerror=updateLoading;
-  });
-}
+// ---------- 場景的背景圖 ----------
+Object.values(scenes).forEach(s => {
+  const img = new Image();
+  img.src = `assets/${s.bg}`;
+  img.onload = img.onerror = updateLoading;
+});
 
 videoAssets.forEach(f=>{
   const v=document.createElement('video');
@@ -991,10 +996,6 @@ function tryPlayBGM(){
       document.addEventListener('click',resume,{once:true});
     });
   }
-}
-function playBtnSound(){
-  btnAudio.currentTime = 0;
-  btnAudio.play().catch(()=>{/* 靜音或被阻擋則略過 */});
 }
 
 /* ---------- DOM ---------- */
