@@ -976,11 +976,23 @@ Object.values(scenes).forEach(s => {
   img.onload = img.onerror = updateLoading;
 });
 
-videoAssets.forEach(f=>{
-  const v=document.createElement('video');
-  v.src=`assets/${f}`;v.preload='metadata';v.muted=true;v.playsInline=true;
-  v.onloadedmetadata=updateLoading;v.onerror=updateLoading;
+// 影片只是預先抓 metadata，不更新進度
+videoAssets.forEach(f => {
+  const v = document.createElement('video');
+  v.src = `assets/${f}`;
+  v.preload = 'metadata';
+  v.muted = true;
+  v.playsInline = true;
+  // → 不再綁 onloadedmetadata / onerror
 });
+
+// 音檔同理
+audioAssets.forEach(f => {
+  const a = new Audio();
+  a.src = `assets/${f}`;
+  // 只要想解碼就好，不呼叫 updateLoading
+});
+
 
 /* ---------- 音效物件 ---------- */
 /* ---------- 音效物件 ---------- */
@@ -1074,13 +1086,32 @@ function triggerPenalty(){
 }
 
 /* ---------- loading → pre ---------- */
-function startPre(){
-  loadingScreen.style.display='none';
-  preContainer.style.display='block';
-  tryPlayBGM();          /* ⬅️ 一進 preContainer 就嘗試播放背景樂 */
-  playIntro();
+/* 2. 先播影片，BGM 等使用者點一下再開 */
+function startPre () {
+  loadingScreen.style.display = 'none';
+  preContainer.style.display  = 'block';
+  playIntro();              // 只播影片
 }
-function playIntro(){stage=0;introDone=false;introVideo.style.display='block';introVideo.play();tapHint.style.display='block';introVideo.onended=()=>{if(!introDone) endIntro();};}
+
+preContainer.addEventListener('click', () => {
+  tryPlayBGM();             // 任何一次真正點擊後再啟動 BGM
+},{ once:true });
+
+/* 3. 播放時機保險做法 */
+function playIntro () {
+  stage      = 0;
+  introDone  = false;
+  introVideo.style.display = 'block';
+  if (introVideo.readyState >= 3) {
+    introVideo.play().catch(()=>{});
+  } else {
+    introVideo.addEventListener('loadeddata', () => {
+      introVideo.play().catch(()=>{});
+    }, { once:true });
+  }
+  tapHint.style.display = 'block';
+}
+
 function skipIntro(){if(!introDone){introDone=true;introVideo.pause();endIntro();}}
 function endIntro(){
   introVideo.style.display='none';overlayContainer.innerHTML='';
