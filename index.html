@@ -936,7 +936,8 @@ const wanderEndings=['流浪結局1.png','流浪結局2.png','流浪結局3.png'
 const staticImgs=[
   'sad.png','賴背景.png','賴回覆按鈕.png','生活公約03.png','我已閱讀按鈕.png',
   '右愛心.png','中愛心.png','左愛心.png','警告頁.png','資訊頁new.png',
-  '結局按鈕.png','政策按鈕.png','其他結局背景.png','政府政策背景.png'
+  '結局按鈕.png','政策按鈕.png','其他結局背景.png','政府政策背景.png',
+  '再玩一次按鈕.png'
 ];
 /* ---------- 新增：音訊素材 ---------- */
 const audioAssets=['BGM.mp3','按鈕音效.mp3'];
@@ -1172,25 +1173,64 @@ readBtn.onclick=function(e){
 /* ---------- 資訊頁 (兩顆按鈕) ---------- */
 function showInfoPage(){
   if(document.getElementById('infoOverlay')) return;
-  const overlay=document.createElement('div');overlay.id='infoOverlay';
-  Object.assign(overlay.style,{position:'absolute',top:0,left:0,width:'100%',height:'100%',zIndex:200});
+
+  // ⬇️ 1. 外框與背景
+  const overlay = document.createElement('div');
+  overlay.id = 'infoOverlay';
+  Object.assign(overlay.style,{
+    position:'absolute',top:0,left:0,width:'100%',height:'100%',zIndex:200
+  });
   gameContainer.appendChild(overlay);
 
-  const bg=new Image();
-  Object.assign(bg.style,{position:'absolute',top:0,left:0,width:'100%',height:'100%',objectFit:'cover'});
-  bg.src='assets/資訊頁new.png';overlay.appendChild(bg);
+  const bg = new Image();
+  Object.assign(bg.style,{
+    position:'absolute',top:0,left:0,width:'100%',height:'100%',objectFit:'cover'
+  });
+  bg.src = 'assets/資訊頁new.png';
+  overlay.appendChild(bg);
 
-  const btnOther=new Image();btnOther.src='assets/結局按鈕.png';btnOther.className='info-btn';
-  btnOther.style.left='0%';btnOther.style.top='39%';btnOther.style.width='80%';
+  // ⬇️ 2. 既有兩顆按鈕
+  const btnOther = new Image();
+  btnOther.src = 'assets/結局按鈕.png';
+  btnOther.className = 'info-btn';
+  btnOther.style.cssText = 'left:0%;top:39%;width:80%;';
   overlay.appendChild(btnOther);
 
-  const btnPolicy=new Image();btnPolicy.src='assets/政策按鈕.png';btnPolicy.className='info-btn';
-  btnPolicy.style.left='24%';btnPolicy.style.top='82%';btnPolicy.style.width='80%';
+  const btnPolicy = new Image();
+  btnPolicy.src = 'assets/政策按鈕.png';
+  btnPolicy.className = 'info-btn';
+  btnPolicy.style.cssText = 'left:24%;top:82%;width:80%;';
   overlay.appendChild(btnPolicy);
 
-  btnOther.onclick=()=>{playBtnSound();overlay.style.display='none';showScrollable('other');};
-  btnPolicy.onclick=()=>{playBtnSound();overlay.style.display='none';showScrollable('policy');};
+  // ⬇️ 3. ⭐ 新增「再玩一次」按鈕（一定要寫在這裡面！）
+  const btnReplay = new Image();
+  btnReplay.src = 'assets/再玩一次按鈕.png';
+  btnReplay.className = 'info-btn';
+  btnReplay.style.cssText =
+      'left:65%;top:1%;width:70%;transform:translateX(-50%);';
+  overlay.appendChild(btnReplay);
+
+  // ⬇️ 4. 三顆按鈕的點擊事件
+  btnOther.onclick  = ()=>{ playBtnSound(); overlay.style.display='none';
+                            showScrollable('other'); };
+
+  btnPolicy.onclick = ()=>{ playBtnSound(); overlay.style.display='none';
+                            showScrollable('policy'); };
+
+  btnReplay.onclick = ()=>{ playBtnSound();
+                            overlay.remove();     // 關閉資訊頁
+                            initHearts();         // 補滿愛心
+                            renderScene('accept');// 回到第一幕
+                          };
 }
+
+
+  btnReplay.onclick = () => {
+    playBtnSound();          // 點擊音效
+    overlay.remove();        // 關閉資訊頁
+    initHearts();            // 愛心補滿
+    renderScene('accept');   // 回到第一個場景
+  };
 
 /* ---------- 捲動式文章頁 ---------- */
 function showScrollable(type){
