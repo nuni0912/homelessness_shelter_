@@ -1224,14 +1224,6 @@ function showInfoPage(){
                           };
 }
 
-
-  btnReplay.onclick = () => {
-    playBtnSound();          // 點擊音效
-    overlay.remove();        // 關閉資訊頁
-    initHearts();            // 愛心補滿
-    renderScene('accept');   // 回到第一個場景
-  };
-
 /* ---------- 捲動式文章頁 ---------- */
 function showScrollable(type){
   const overlay=document.createElement('div');overlay.id='scrollOverlay';
