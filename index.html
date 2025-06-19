@@ -944,56 +944,67 @@ const audioAssets=['BGM.mp3','按鈕音效.mp3'];
 
 /* ---------- 載入流程 ---------- */
 /* ---------- 載入流程 ---------- */
-let loadedAssets = 0;
+/* ---------- 載入流程 ---------- *\
+ *  進度條只統計「圖片」，
+ *  影片 / 音檔仍提早解碼但不影響百分比。
+\* -------------------------------- */
 
-// 只把「圖片」算進讀條
-const preloadTargets = [
-  ...staticImgs, ...lauDialogs, ...interDialogs,
-  ...ruleImgs, ...miscImgs, ...wanderEndings
+// 蒐集「場景背景」去重後再加進清單
+const uniqueBGs   = [...new Set(Object.values(scenes).map(s => s.bg))];
+const preloadList = [
+  ...staticImgs,
+  ...lauDialogs,
+  ...interDialogs,
+  ...ruleImgs,
+  ...miscImgs,
+  ...wanderEndings,
+  ...uniqueBGs
 ];
 
-const totalAssets = preloadTargets.length +
-                    Object.keys(scenes).length;   // 每個場景的背景圖
-
-function updateLoading () {
-  loadedAssets++;
-  const pct = Math.round(loadedAssets / totalAssets * 100);
-  loadingText.innerText = pct + '%';
-  loadingProgress.style.width = pct + '%';
-  if (loadedAssets >= totalAssets) setTimeout(startPre, 300);
+/* 單張圖片 Promise 載入 */
+function preload(src){
+  return new Promise(res => {
+    const img   = new Image();
+    img.onload  = img.onerror = () => {
+      img.onload = img.onerror = null;   // 防止重複觸發
+      res();
+    };
+    img.src = `assets/${src}`;
+  });
 }
 
-// ---------- 圖片預載 ----------
-preloadTargets.forEach(f => {
-  const img = new Image();
-  img.src = `assets/${f}`;
-  img.onload = img.onerror = updateLoading;
-});
+/* 批次預載 + 更新進度條 */
+(async ()=>{
+  const total  = preloadList.length;
+  let   loaded = 0;
+  const tick = ()=>{
+    const pct = ++loaded / total * 100;
+    loadingProgress.style.width  = pct + '%';
+    loadingText.textContent      = Math.min(100, Math.floor(pct)) + '%';
+    if (loaded === total) startPre();   // 全部搞定就開跑
+  };
 
-// ---------- 場景的背景圖 ----------
-Object.values(scenes).forEach(s => {
-  const img = new Image();
-  img.src = `assets/${s.bg}`;
-  img.onload = img.onerror = updateLoading;
-});
+  for (const src of preloadList){
+    preload(src).then(tick);
+  }
+})();
 
-// 影片只是預先抓 metadata，不更新進度
+/* ---------- 影音檔提前解碼（不列入進度） ---------- */
+
+// 影片：只抓 metadata，避免卡首播
 videoAssets.forEach(f => {
   const v = document.createElement('video');
-  v.src = `assets/${f}`;
-  v.preload = 'metadata';
-  v.muted = true;
-  v.playsInline = true;
-  // → 不再綁 onloadedmetadata / onerror
+  v.src        = `assets/${f}`;
+  v.preload    = 'metadata';
+  v.muted      = true;
+  v.playsInline= true;
 });
 
-// 音檔同理
+// 音訊：先解碼，之後觸發才不 lag
 audioAssets.forEach(f => {
   const a = new Audio();
   a.src = `assets/${f}`;
-  // 只要想解碼就好，不呼叫 updateLoading
 });
-
 
 /* ---------- 音效物件 ---------- */
 /* ---------- 音效物件 ---------- */
@@ -1018,13 +1029,6 @@ function playBtnSound(){
   snd.currentTime = 0;
   snd.play().catch(()=>{});   // 被靜音就算了
 }
-
-
-audioAssets.forEach(f=>{
-  const a = new Audio(); a.src=`assets/${f}`;
-  a.oncanplaythrough = updateLoading;
-  a.onerror          = updateLoading;
-});
 
 /* ---------- 播放工具 ---------- */
 function tryPlayBGM(){
